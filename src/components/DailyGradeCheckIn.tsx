@@ -10,6 +10,7 @@ import {
   HelpCircle,
   Award,
   ChevronRight,
+  Filter,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import {
@@ -31,6 +32,31 @@ type DailyGradeCheckInProps = {
   userName: string;
   onRefreshData: () => void;
 };
+
+function playGradeChime(gradeVal: number) {
+  if (typeof window === "undefined") return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    const freqs: Record<number, number> = { 5: 880, 4: 659.25, 3: 523.25, 2: 392 };
+    osc.frequency.setValueAtTime(freqs[gradeVal] || 523.25, ctx.currentTime);
+    osc.type = "sine";
+
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+  } catch {
+    // Audio unsupported or blocked, ignore gracefully
+  }
+}
 
 export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
   schedule,
@@ -54,8 +80,21 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
     5: "friday",
     6: "saturday",
   };
-  const todayKey: DayOfWeek = dayMap[dayIndex] || "monday";
+  const systemTodayKey: DayOfWeek = dayMap[dayIndex] || "monday";
   const todayStr = now.toISOString().split("T")[0];
+
+  // Allow switching day for testing or reviewing other days
+  const [activeDay, setActiveDay] = useState<DayOfWeek>(systemTodayKey);
+
+  const daysInfo: { id: DayOfWeek; label: string; short: string }[] = [
+    { id: "monday", label: "Dushanba", short: "Dush" },
+    { id: "tuesday", label: "Seshanba", short: "Sesh" },
+    { id: "wednesday", label: "Chorshanba", short: "Chor" },
+    { id: "thursday", label: "Payshanba", short: "Pay" },
+    { id: "friday", label: "Juma", short: "Jum" },
+    { id: "saturday", label: "Shanba", short: "Shan" },
+    { id: "sunday", label: "Yakshanba", short: "Yak" },
+  ];
 
   const daysLabels: Record<DayOfWeek, string> = {
     monday: "Dushanba",
@@ -67,9 +106,9 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
     sunday: "Yakshanba",
   };
 
-  const isRestDay = schedule.rest_days.includes(todayKey);
-  const todaySubjectIds = schedule.timetable[todayKey] || [];
-  const todaySubjects = todaySubjectIds
+  const isRestDay = schedule.rest_days.includes(activeDay);
+  const currentSubjectIds = schedule.timetable[activeDay] || [];
+  const currentScheduledSubjects = currentSubjectIds
     .map((id) => subjects.find((s) => s.id === id))
     .filter(Boolean) as Subject[];
 
@@ -88,6 +127,8 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
 
   const handleGradeToday = async (sub: Subject, gradeVal: GradeValue) => {
     setSavingSubjectId(sub.id);
+    playGradeChime(gradeVal);
+
     try {
       if (gradeVal === 5) {
         confetti({
@@ -102,7 +143,7 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
         subject_id: sub.id,
         grade_value: gradeVal,
         date: todayStr,
-        comment: `Bugungi dars bahosi (${daysLabels[todayKey]})`,
+        comment: `Dars jadvali bahosi (${daysLabels[activeDay]})`,
         type: "classwork",
       });
 
@@ -118,10 +159,33 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
     setSkippedSubjectIds((prev) => ({ ...prev, [subId]: true }));
   };
 
-  // Case 1: Today is a Rest Day
+  // Case 1: Active Day is a Rest Day
   if (isRestDay) {
     return (
       <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-amber-950/40 via-slate-900/90 to-amber-950/30 border border-amber-500/30 backdrop-blur-xl relative overflow-hidden shadow-xl animate-in fade-in">
+        {/* Day switch bar */}
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-amber-500/20">
+          <span className="text-[11px] font-semibold text-amber-300">
+            Dars kunini tanlash:
+          </span>
+          <div className="flex space-x-1">
+            {daysInfo.map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => setActiveDay(d.id)}
+                className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all ${
+                  activeDay === d.id
+                    ? "bg-amber-500 text-black shadow"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
+                }`}
+              >
+                {d.short}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-2xl shrink-0">
@@ -130,14 +194,14 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
             <div>
               <div className="flex items-center space-x-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
-                  {daysLabels[todayKey]} • Dam Olish Kuni
+                  {daysLabels[activeDay]} • Dam Olish Kuni
                 </span>
               </div>
               <h3 className="text-base sm:text-lg font-bold text-white mt-0.5">
                 Bugun dam olish kuni, {userName}!
               </h3>
               <p className="text-xs text-slate-300 mt-1 max-w-xl">
-                Dars jadvalida darslar yo'q. Bugun mazza qilib hordiq chiqaring va kelasi haftaga kuch to'plang!
+                Dars jadvalida darslar rejalashtirilmagan. Mazza qilib hordiq chiqaring va kelasi haftaga kuch to'plang!
               </p>
             </div>
           </div>
@@ -150,13 +214,8 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
     );
   }
 
-  // Case 2: No subjects scheduled for today
-  if (todaySubjects.length === 0) {
-    return null;
-  }
-
   // Count pending subjects
-  const pendingSubjects = todaySubjects.filter(
+  const pendingSubjects = currentScheduledSubjects.filter(
     (s) => !isSubjectGradedToday(s.id) && !skippedSubjectIds[s.id]
   );
 
@@ -164,8 +223,41 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
     <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-indigo-950/70 via-slate-900 to-purple-950/60 border border-indigo-500/30 shadow-2xl relative overflow-hidden animate-in fade-in">
       <div className="absolute top-0 right-0 -mr-10 -mt-10 w-48 h-48 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
 
+      {/* Top Day Switcher */}
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+        <div className="flex items-center space-x-2">
+          <Calendar className="w-4 h-4 text-indigo-400" />
+          <span className="text-xs font-bold text-slate-300">
+            Dars jadvali kuni:
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {daysInfo.map((d) => {
+            const isSelected = activeDay === d.id;
+            const isSystemToday = systemTodayKey === d.id;
+            return (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => setActiveDay(d.id)}
+                className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all relative ${
+                  isSelected
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                {d.short}
+                {isSystemToday && (
+                  <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
             <Sparkles className="w-5 h-5 animate-pulse" />
@@ -173,7 +265,7 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
           <div>
             <div className="flex items-center space-x-2">
               <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">
-                Bugun: {daysLabels[todayKey]} • Dars Jadvali
+                {daysLabels[activeDay]} • Dars Jadvali
               </span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             </div>
@@ -184,22 +276,24 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
         </div>
 
         <div className="text-xs text-slate-400">
-          {pendingSubjects.length > 0 ? (
+          {currentScheduledSubjects.length === 0 ? (
+            <span className="text-slate-400">Ushbu kunga dars biriktirilmagan</span>
+          ) : pendingSubjects.length > 0 ? (
             <span className="text-amber-400 font-semibold">
               {pendingSubjects.length} ta dars bo'yicha baholash kutilmoqda
             </span>
           ) : (
             <span className="text-emerald-400 font-semibold flex items-center space-x-1">
               <CheckCircle2 className="w-4 h-4" />
-              <span>Bugungi darslar to'liq qayd etildi!</span>
+              <span>Darslar to'liq qayd etildi!</span>
             </span>
           )}
         </div>
       </div>
 
-      {/* List of today's scheduled classes */}
+      {/* List of scheduled classes */}
       <div className="divide-y divide-slate-800/80 pt-2">
-        {todaySubjects.map((sub, idx) => {
+        {currentScheduledSubjects.map((sub, idx) => {
           const graded = isSubjectGradedToday(sub.id);
           const currentTodayGrade = getTodayGrade(sub.id);
           const isSkipped = !!skippedSubjectIds[sub.id];
@@ -207,7 +301,7 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
           return (
             <div
               key={`${sub.id}-${idx}`}
-              className="py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3"
+              className="py-3 flex flex-col md:flex-row md:items-center justify-between gap-3"
             >
               <div className="flex items-center space-x-3">
                 <span className="w-7 h-7 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold flex items-center justify-center text-slate-300">
@@ -227,7 +321,7 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
                 </div>
               </div>
 
-              {/* Action Buttons: If not graded yet, show 5, 4, 3, 2, Baho olinmadi */}
+              {/* Action Buttons: 5, 4, 3, 2, Olinmadi */}
               <div className="flex items-center space-x-2 self-end md:self-auto">
                 {graded ? (
                   <div className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
@@ -292,8 +386,13 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
             </div>
           );
         })}
+
+        {currentScheduledSubjects.length === 0 && (
+          <div className="py-6 text-center text-xs text-slate-500">
+            {daysLabels[activeDay]} kunida darslar belgilanmagan. Admin paneldan dars jadvalini sozlashingiz mumkin.
+          </div>
+        )}
       </div>
     </div>
   );
 };
-
