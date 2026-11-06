@@ -109,22 +109,33 @@ export const AdminScheduleView: React.FC<AdminScheduleViewProps> = ({
     onRefreshData();
   };
 
-  // Preset Template Loader (Standard Shohjahon Schedule)
+  // Preset Template Loader (Standard Shohjahon Schedule for 13 subjects)
   const handleLoadStandardTemplate = () => {
-    const kamon = subjects.find((s) => s.name.toLowerCase().includes("kamon"))?.id || subjects[0]?.id || "";
-    const rus = subjects.find((s) => s.name.toLowerCase().includes("rus"))?.id || subjects[1]?.id || "";
-    const ona = subjects.find((s) => s.name.toLowerCase().includes("ona"))?.id || subjects[2]?.id || "";
-    const bio = subjects.find((s) => s.name.toLowerCase().includes("bio"))?.id || subjects[3]?.id || "";
+    const findSub = (query: string) => subjects.find((s) => s.name.toLowerCase().includes(query))?.id || "";
+
+    const eng = findSub("ingliz");
+    const math = findSub("matematika");
+    const chem = findSub("kimyo");
+    const tarbiya = findSub("tarbiya");
+    const it = findSub("it");
+    const arab = findSub("arab");
+    const hist = findSub("tarix");
+    const rus = findSub("rus");
+    const ona = findSub("ona");
+    const phys = findSub("fizika");
+    const bio = findSub("biologiya");
+    const mathTask = findSub("math task") || findSub("task");
+    const engTask = findSub("english task");
 
     const template: ScheduleSettings = {
       rest_days: ["sunday"],
       timetable: {
-        monday: [ona, rus, kamon].filter(Boolean),
-        tuesday: [bio, ona, rus].filter(Boolean),
-        wednesday: [kamon, ona, bio].filter(Boolean),
-        thursday: [rus, ona, kamon].filter(Boolean),
-        friday: [bio, rus, ona].filter(Boolean),
-        saturday: [kamon, bio].filter(Boolean),
+        monday: [ona, math, eng, it].filter(Boolean),
+        tuesday: [phys, chem, rus, mathTask].filter(Boolean),
+        wednesday: [bio, hist, arab, engTask].filter(Boolean),
+        thursday: [math, ona, tarbiya, it].filter(Boolean),
+        friday: [chem, phys, rus, bio].filter(Boolean),
+        saturday: [arab, hist, mathTask, engTask].filter(Boolean),
         sunday: [],
       },
     };
@@ -419,3 +430,4 @@ export const AdminScheduleView: React.FC<AdminScheduleViewProps> = ({
     </div>
   );
 };
+

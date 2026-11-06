@@ -110,9 +110,18 @@ CREATE POLICY "Users can access their own timetable" ON public.timetable FOR ALL
 CREATE POLICY "Users can access their own schedule_settings" ON public.schedule_settings FOR ALL USING (true);
 
 -- ==============================================================================
--- DEFAULT INITIAL SUBJECTS FOR SHOHJAHON
+-- DEFAULT INITIAL SUBJECTS FOR SHOHJAHON (13 ta fan)
 -- ==============================================================================
--- 1. Kamon otish
--- 2. Rus tili
--- 3. Ona tili
--- 4. Biologiya
+-- 1. Ingliz tili
+-- 2. Matematika
+-- 3. Kimyo
+-- 4. Tarbiya
+-- 5. IT
+-- 6. Arab tili
+-- 7. Tarix
+-- 8. Rus tili
+-- 9. Ona tili
+-- 10. Fizika
+-- 11. Biologiya
+-- 12. Math Task
+-- 13. English Task

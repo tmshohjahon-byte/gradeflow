@@ -424,30 +424,115 @@ export function generateMentorResponse(
         (s) => s.subject.id === matchedSubject.id
       );
 
+      const subNameLower = matchedSubject.name.toLowerCase();
+      let subjectSpecificSteps = "";
+
+      if (subNameLower.includes("ingliz") || subNameLower.includes("english")) {
+        subjectSpecificSteps = 
+          `**Ingliz tili bo'yicha maxsus mentor tavsiyalari:**\n` +
+          `1. 🎧 **Active Listening & Shadowing:** Podkastlarni tinglab, o'sha intonatsiyada ovoz chiqarib qaytaring.\n` +
+          `2. 📖 **Academic Vocabulary:** Har kuni 10-15 ta yangi so'zni kontekstda gaplar tuzib yodlang.\n` +
+          `3. ✍️ **Writing & Essays:** Har hafta kamida bitta insho yoki xat yozing va grammatikani tekshirib boring.\n` +
+          `4. ⏱️ Reading va testlarda vaqtni to'g'ri taqsimlashni mashq qiling.`;
+      } else if (subNameLower.includes("matematika") || subNameLower.includes("math")) {
+        subjectSpecificSteps = 
+          `**Matematika va Math Task bo'yicha maxsus mentor tavsiyalari:**\n` +
+          `1. 📐 **Formulalarni tushunish:** Formulalarni yodlamasdan, ularning qayerdan kelib chiqishini isbotlab o'rganing.\n` +
+          `2. 🎯 **Har kuni 5 ta murakkab masala:** Nazariyadan ko'ra ko'proq amaliy masalalarni ketma-ket yeching.\n` +
+          `3. 📝 **Xatolar daftari:** Noto'g'ri chiqqan masalani 2 kundan keyin qaytadan mustaqil yechib ko'ring.\n` +
+          `4. ⚡ Hisoblash tezligi va e'tiborni oshirish uchun doimiy mashq qiling.`;
+      } else if (subNameLower.includes("kimyo")) {
+        subjectSpecificSteps = 
+          `**Kimyo bo'yicha maxsus mentor tavsiyalari:**\n` +
+          `1. ⚗️ **Valentlik va formulalar:** Elementlar davriy jadvalidagi qonuniyatlarni chuqur o'rganing.\n` +
+          `2. ⚖️ **Reaksiyalarni tenglashtirish:** Oksidlanish-qaytarilish reaksiyalarini elektron balans usulida tenglang.\n` +
+          `3. 🧪 **Masala yechish:** Modda miqdori (mol), eritmalar konsentratsiyasi bo'yicha amaliy masalalarni yeching.\n` +
+          `4. 📋 Laboratoriya va tajriba xulosalarini mantiqiy tahlil qiling.`;
+      } else if (subNameLower.includes("it")) {
+        subjectSpecificSteps = 
+          `**IT va Dasturlash bo'yicha maxsus mentor tavsiyalari:**\n` +
+          `1. 💻 **Hands-on Coding:** Har kuni kamida 30-45 daqiqa amaliy kod yozing (Python / Web).\n` +
+          `2. 🧩 **Algoritmlar va Mantiq:** Masalalarni kichik qismlarga bo'lib, mantiqiy blok-sxemalar chizing.\n` +
+          `3. 🛠️ **Loyihalar ustida ishlash:** Kichik real loyihalar yaratib bilimlarni mustahkamlang.\n` +
+          `4. 🔍 Xatolarni (Debug) qilishni odat qiling, StackOverflow va dokumentatsiyani o'rganing.`;
+      } else if (subNameLower.includes("arab")) {
+        subjectSpecificSteps = 
+          `**Arab tili bo'yicha maxsus mentor tavsiyalari:**\n` +
+          `1. 🗣️ **Maxraj va talaffuz:** Harflarning to'g'ri maxrajidan chiqishiga jiddiy e'tibor bering.\n` +
+          `2. 📖 **Sarf va Nahv:** So'z yasalishi va gapdagi e'roblar (harakatlar) qoidalarini mustahkamlang.\n` +
+          `3. ✍️ **Husnixat va yozuv:** Arab yozuvida matnlarni ko'chirish va imloni mustahkamlash.\n` +
+          `4. 📚 Lug'at boyligini oshirish uchun har kuni matnlarni tarjima qilish.`;
+      } else if (subNameLower.includes("fizika")) {
+        subjectSpecificSteps = 
+          `**Fizika bo'yicha maxsus mentor tavsiyalari:**\n` +
+          `1. ⚛️ **Fizik ma'no:** Har bir formuladagi kattaliklarning birliklari va fizik ma'nosini tushuning.\n` +
+          `2. 📈 **Chizmalar va kuchlar:** Mexanika va dinamika masalalarida barcha ta'sir etuvchi kuchlarni chizmada ko'rsating.\n` +
+          `3. 🧮 **O'lchov birliklari tahlili:** Javobning to'g'riligini o'lchov birliklari orqali tekshirish odati.\n` +
+          `4. 🔬 Real hodisalar va tajribalarni nazariya bilan bog'lang.`;
+      } else if (subNameLower.includes("tarix")) {
+        subjectSpecificSteps = 
+          `**Tarix bo'yicha maxsus mentor tavsiyalari:**\n` +
+          `1. ⏳ **Xronologik jadval:** Muhim voqealar va sanalarni vaqt chizig'ida tizimlashtiring.\n` +
+          `2. 🗺️ **Tarixiy xaritalar:** Davlatlar chegaralari va jang maydonlarini xaritada ko'rsatib o'rganing.\n` +
+          `3. 🔗 **Sabab-oqibat mantiqi:** Har bir tarixiy hodisaning tub sabablarini va natijalarini tahlil qiling.\n` +
+          `4. 📖 Mavzuni birovga ertak kabi hikoya qilib berish orqali xotirada mustahkamlang.`;
+      } else if (subNameLower.includes("tarbiya")) {
+        subjectSpecificSteps = 
+          `**Tarbiya fani bo'yicha maxsus mentor tavsiyalari:**\n` +
+          `1. 🌟 **Axloqiy qadriyatlar:** Darsdagi mavzularni kundalik hayotdagi munosabatlar bilan bog'lang.\n` +
+          `2. 👥 **Jamoaviy madaniyat:** Sinfdoshlar va jamoada faol muloqot va hurmat qoidalarini qo'llang.\n` +
+          `3. 📚 Ibratli voqealar va allomalarimiz o'gitlarini tahlil qiling.`;
+      } else if (subNameLower.includes("rus")) {
+        subjectSpecificSteps = 
+          `**Rus tili bo'yicha maxsus mentor tavsiyalari:**\n` +
+          `1. 🗣️ **Падежи & управление:** Har kuni bitta kelishik (падеж) va unga bog'liq fe'llar bo'yicha 15 daqiqa mashq yeching.\n` +
+          `2. 📖 **Lug'at boyligi:** Har kuni 10 ta yangi ibora va sinonimlarni kartochkalar orqali yodlang.\n` +
+          `3. 🎧 **Tinglab tushunish:** Rus tilidagi qisqa audio/podkastlarni tinglab, orqasidan ovoz chiqarib takrorlang (Shadowing usuli).\n` +
+          `4. ✍️ Haftada 2 marta kichik bayon yoki diktant yozib xatolarni tahlil qiling.`;
+      } else if (subNameLower.includes("ona tili")) {
+        subjectSpecificSteps = 
+          `**Ona tili bo'yicha maxsus mentor tavsiyalari:**\n` +
+          `1. 📝 **Imlo va morfemika:** Asos va qo'shimchalar, tovush o'zgarishlari qoidalarini mustahkamlang.\n` +
+          `2. 🔍 **Sintaktik tahlil:** Qo'shma gap turlari va tinish belgilarining qo'yilish o'rinlarini amalda qo'llang.\n` +
+          `3. ✍️ **Insho va bayon mahorati:** Fikrni mantiqiy va adabiy tilda ifodalash ustida ishlang.\n` +
+          `4. ⏱️ Har kuni 20 ta mavzulashtirilgan test yechib, xatolar ustida ishlang.`;
+      } else if (subNameLower.includes("bio")) {
+        subjectSpecificSteps = 
+          `**Biologiya bo'yicha maxsus mentor tavsiyalari:**\n` +
+          `1. 🧬 **Genetika masalalari:** Mendel qonunlari, krossingover va jinsga bog'liq irsiylanish masalalarini sxematik yeching.\n` +
+          `2. 🔬 **Sitologiya va biokimyo:** Hujayra organoidlari, fotosintez va ATF sintezi bosqichlarini chizib o'rganing.\n` +
+          `3. 📚 **Terminologiya:** Yangi biologik terminlar uchun lug'at tuting.\n` +
+          `4. 📊 Test sinovlarida savolni oxirigacha sinchkovlik bilan o'qish odatini shakllantiring.`;
+      } else {
+        subjectSpecificSteps = 
+          `**Tavsiya etiladigan amaliy qadamlar:**\n` +
+          `1. Oxirgi darslar bo'yicha mavzuviy testlarni qayta mustahkamlang.\n` +
+          `2. Xatolar daftari (Error Log) tuting: har bir xato sababini yozib boring.\n` +
+          `3. O'qituvchidan qo'shimcha nazorat mashqlari so'rang va a'lo baho olishga harakat qiling.\n` +
+          `4. Har kuni kamida 20 daqiqa ushbu fanga doimiy vaqt ajrating.`;
+      }
+
       return `Sizning **${matchedSubject.name}** fani bo'yicha tahlilim:\n\n` +
         `• Joriy holat: ${isWeak ? "⚠️ Bu sizning eng ko'p e'tibor talab qiluvchi faningiz." : isDeclining ? "📉 Oxirgi baholarda biroz pasayish kuzatilmoqda." : "✅ Ushbu fan bo'yicha ko'rsatkichlaringiz yaxshi maromda."}\n\n` +
-        `**Tavsiya etiladigan amaliy qadamlar:**\n` +
-        `1. Oxirgi darslar bo'yicha mavzuviy testlarni qayta mustahkamlang.\n` +
-        `2. Xatolar daftari (Error Log) tuting: har bir xato sababini yozib boring.\n` +
-        `3. O'qituvchidan qo'shimcha nazorat mashqlari so'rang va a'lo baho olishga harakat qiling.\n` +
-        `4. Har kuni kamida 20 daqiqa ushbu fanga doimiy vaqt ajrating.`;
+        subjectSpecificSteps;
     }
 
     if (queryLower.includes("reja") || queryLower.includes("plan") || queryLower.includes("jadval")) {
-      return `📅 **Siz uchun 7 kunlik Shaxsiy Akademik Reja:**\n\n` +
-        `• **Dushanba & Chorshanba**: Zaif fan (${analysis.weakestSubject?.subject.name || "Fizika/Matematika"}) bo'yicha 35 daqiqa chuqurlashtirilgan mashg'ulot.\n` +
-        `• **Seshanba & Payshanba**: O'rtacha fanlar bo'yicha topshiriqlar va nazorat ishlariga tayyorgarlik.\n` +
-        `• **Juma**: Haftalik xatolar tahlili va o'tilgan barcha mavzularni 30 daqiqalik takrorlash.\n` +
-        `• **Shanba**: Eng kuchli faningiz (${analysis.strongestSubject?.subject.name || "Ingliz tili"}) bo'yicha olimpiada/ilg'or topshiriqlar.\n` +
-        `• **Yakshanba**: Kelasi hafta uchun rejalashtirish va ruhiy dam olish.`;
+      return `📅 **Shohjahon uchun 7 kunlik Shaxsiy Akademik Reja:**\n\n` +
+        `• **Dushanba**: Ona tili (Imlo va grammatik mashqlar) & Rus tili (Lug'at va matn)\n` +
+        `• **Seshanba**: Biologiya (Genetika masalalari) & Ona tili\n` +
+        `• **Chorshanba**: Kamon otish (Texnika va nishonga urish mashqi) & Biologiya\n` +
+        `• **Payshanba**: Rus tili (Grammatika va suhbat) & Kamon otish mashg'uloti\n` +
+        `• **Juma**: Biologiya (Sxemalar va takrorlash) & Ona tili (Haftalik nazorat)\n` +
+        `• **Shanba**: Kamon otish (Musobaqa rejimida otish) va haftalik xatolar tahlili\n` +
+        `• **Yakshanba**: 🏖️ Dam olish kuni! Hordiq chiqarish va yangi haftaga reja tuzish.`;
     }
 
-    return `Salom! Men sizning **GradeFlow AI Akademik Mentoringizman**.\n\n` +
-      `Sizning umumiy natijalaringizni chuqur tahlil qildim:\n` +
-      `• Eng yuqori natijangiz: **${analysis.strongestSubject?.subject.name || "Ingliz tili"}** (${analysis.strongestSubject?.average || 5.0} ball) — zo'r barqarorlik!\n` +
-      `• Asosiy fokus talab etadigan fan: **${analysis.weakestSubject?.subject.name || "Fizika"}** (${analysis.weakestSubject?.average || 3.8} ball).\n` +
-      `• Haftalik o'zgarish: ${analysis.weeklyVsMonthly.weeklyTrend >= 0 ? "📈 +" + analysis.weeklyVsMonthly.weeklyTrend : "📉 " + analysis.weeklyVsMonthly.weeklyTrend} ball.\n\n` +
-      `Menga aniq savol bering: masalan, *"Fizikani qanday ko'tarishim mumkin?"*, *"7 kunlik dars rejasi tuzib ber"* yoki *"Maqsadga yetishish uchun nima qilish kerak?"*!`;
+    return `Salom, **Shohjahon**! Men sizning **GradeFlow AI Akademik Mentoringizman**.\n\n` +
+      `Sizning fanlaringiz:\n` +
+      `• 🎯 **Kamon otish** | 🇷🇺 **Rus tili** | 🇺🇿 **Ona tili** | 🧬 **Biologiya**\n\n` +
+      `Bugungi kunda barcha ko'rsatkichlaringizni kuzatib bormoqdaman.\n` +
+      `Menga bemalol savol bering: masalan, *"Kamon otishda qanday natijani oshiray?"*, *"7 kunlik dars rejasi"*, yoki *"Rus tilidan bahoni 5 qilish"*!`;
   }
 
   if (lang === "ru") {

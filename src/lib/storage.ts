@@ -26,7 +26,7 @@ const STORAGE_KEYS = {
   NOTIFICATIONS: "gradeflow_notifications",
   LANGUAGE: "gradeflow_lang",
   SCHEDULE: "gradeflow_schedule",
-  VERSION: "gradeflow_v3_shohjahon_zero",
+  VERSION: "gradeflow_v4_shohjahon_13subjects",
 };
 
 export const DATA_CHANGE_EVENT = "gradeflow:data-change";
