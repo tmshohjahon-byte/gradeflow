@@ -2,6 +2,14 @@ export type GradeValue = 2 | 3 | 4 | 5;
 
 export type Language = 'uz' | 'en' | 'ru';
 
+export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+export type ScheduleSettings = {
+  rest_days: DayOfWeek[];
+  timetable: Record<DayOfWeek, string[]>; // day -> array of subject_id
+  updated_at?: string;
+};
+
 export type UserProfile = {
   id: string;
   email: string;
@@ -142,3 +150,4 @@ export type MentorAnalysis = {
     effectiveRate: number; // 0-100%
   };
 };
+

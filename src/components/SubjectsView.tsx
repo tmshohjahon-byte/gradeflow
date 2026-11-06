@@ -615,3 +615,4 @@ export const SubjectsView: React.FC<SubjectsViewProps> = ({
     </div>
   );
 };
+

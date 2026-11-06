@@ -11,6 +11,8 @@ import {
   Sliders,
   ChevronRight,
   TrendingUp,
+  Shield,
+  Calendar,
 } from "lucide-react";
 import { Language, Notification } from "@/types/database";
 import { translations } from "@/lib/i18n";
@@ -61,6 +63,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: "goals",
       label: t.goals,
       icon: Target,
+    },
+    {
+      id: "admin",
+      label: "Admin Panel",
+      icon: Shield,
     },
     {
       id: "notifications",
@@ -182,3 +189,4 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </aside>
   );
 };
+

@@ -9,6 +9,7 @@ import { SubjectsView } from "@/components/SubjectsView";
 import { MentorView } from "@/components/MentorView";
 import { GoalsView } from "@/components/GoalsView";
 import { NotificationsView } from "@/components/NotificationsView";
+import { AdminScheduleView } from "@/components/AdminScheduleView";
 import { QuickAddGradeModal } from "@/components/QuickAddGradeModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import {
@@ -18,6 +19,7 @@ import {
   AcademicGoal,
   Notification,
   Language,
+  ScheduleSettings,
 } from "@/types/database";
 import {
   getUserProfile,
@@ -25,11 +27,13 @@ import {
   getGrades,
   getGoals,
   getNotifications,
+  getScheduleSettings,
   getStoredLanguage,
   setStoredLanguage,
   deleteGrade,
   DATA_CHANGE_EVENT,
 } from "@/lib/storage";
+import { defaultScheduleSettings } from "@/lib/sampleData";
 import { calculatePerformanceMetrics } from "@/lib/analytics";
 import { analyzeAcademicPerformance, auditAndDispatchAcademicNotifications } from "@/lib/mentorEngine";
 
@@ -43,6 +47,7 @@ export default function Home() {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [goals, setGoals] = useState<AcademicGoal[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [schedule, setSchedule] = useState<ScheduleSettings>(defaultScheduleSettings);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isMounted, setIsMounted] = useState<boolean>(false);
 
@@ -55,18 +60,20 @@ export default function Home() {
   // Load all data
   const loadAllData = useCallback(async () => {
     try {
-      const [u, s, g, goalsData, notifs] = await Promise.all([
+      const [u, s, g, goalsData, notifs, sched] = await Promise.all([
         getUserProfile(),
         getSubjects(),
         getGrades(),
         getGoals(),
         getNotifications(),
+        getScheduleSettings(),
       ]);
       setUser(u);
       setSubjects(s);
       setGrades(g);
       setGoals(goalsData);
       setNotifications(notifs);
+      setSchedule(sched);
 
       // Audit dynamic alerts in background
       await auditAndDispatchAcademicNotifications(s, g, goalsData, lang);
@@ -167,6 +174,9 @@ export default function Home() {
                   subjects={subjects}
                   recentGrades={grades}
                   lang={lang}
+                  schedule={schedule}
+                  userName={user?.full_name || "Shohjahon"}
+                  onRefreshData={loadAllData}
                   onOpenAddGrade={() => handleOpenAddGrade()}
                   onNavigateTab={(tab) => setActiveTab(tab)}
                   onEditGrade={handleEditGrade}
@@ -212,6 +222,15 @@ export default function Home() {
                   goals={goals}
                   subjects={subjects}
                   grades={grades}
+                  lang={lang}
+                  onRefreshData={loadAllData}
+                />
+              )}
+
+              {activeTab === "admin" && (
+                <AdminScheduleView
+                  schedule={schedule}
+                  subjects={subjects}
                   lang={lang}
                   onRefreshData={loadAllData}
                 />

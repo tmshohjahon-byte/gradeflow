@@ -386,3 +386,4 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
     </div>
   );
 };
+

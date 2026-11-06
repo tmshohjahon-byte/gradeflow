@@ -1,18 +1,28 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const defaultUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const defaultAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const defaultUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://pnlhyuzpveicmaugaksx.supabase.co';
+const defaultAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_ho4xxMhDNsXRUqFmABzZUA_c_AFm-NN';
 
 let cachedClient: SupabaseClient | null = null;
 
+export function normalizeSupabaseUrl(url: string): string {
+  if (!url) return '';
+  let clean = url.trim();
+  // Strip trailing slash
+  clean = clean.replace(/\/+$/, '');
+  // Strip /rest/v1 if included
+  clean = clean.replace(/\/rest\/v1$/i, '');
+  return clean;
+}
+
 export function getSupabaseCredentials() {
   if (typeof window === 'undefined') {
-    return { url: defaultUrl, anonKey: defaultAnonKey };
+    return { url: normalizeSupabaseUrl(defaultUrl), anonKey: defaultAnonKey };
   }
   const customUrl = localStorage.getItem('gradeflow_supabase_url');
   const customKey = localStorage.getItem('gradeflow_supabase_key');
   return {
-    url: customUrl || defaultUrl,
+    url: normalizeSupabaseUrl(customUrl || defaultUrl),
     anonKey: customKey || defaultAnonKey,
   };
 }
@@ -20,7 +30,7 @@ export function getSupabaseCredentials() {
 export function saveSupabaseCredentials(url: string, anonKey: string) {
   if (typeof window !== 'undefined') {
     if (url && anonKey) {
-      localStorage.setItem('gradeflow_supabase_url', url.trim());
+      localStorage.setItem('gradeflow_supabase_url', normalizeSupabaseUrl(url));
       localStorage.setItem('gradeflow_supabase_key', anonKey.trim());
     } else {
       localStorage.removeItem('gradeflow_supabase_url');

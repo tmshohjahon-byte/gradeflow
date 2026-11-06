@@ -33,9 +33,11 @@ import {
   PerformanceMetrics,
   MentorAnalysis,
   Language,
+  ScheduleSettings,
 } from "@/types/database";
 import { translations } from "@/lib/i18n";
 import { formatDate, getGradeBadgeColor } from "@/lib/utils";
+import { DailyGradeCheckIn } from "./DailyGradeCheckIn";
 
 type DashboardViewProps = {
   metrics: PerformanceMetrics;
@@ -43,6 +45,9 @@ type DashboardViewProps = {
   subjects: Subject[];
   recentGrades: Grade[];
   lang: Language;
+  schedule?: ScheduleSettings;
+  userName?: string;
+  onRefreshData?: () => void;
   onOpenAddGrade: () => void;
   onNavigateTab: (tab: string) => void;
   onEditGrade: (grade: Grade) => void;
@@ -55,6 +60,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   subjects,
   recentGrades,
   lang,
+  schedule,
+  userName = "Shohjahon",
+  onRefreshData,
   onOpenAddGrade,
   onNavigateTab,
   onEditGrade,
@@ -126,6 +134,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Daily Grade Check-in (Prompting today's scheduled subjects) */}
+      {schedule && onRefreshData && (
+        <DailyGradeCheckIn
+          schedule={schedule}
+          subjects={subjects}
+          grades={recentGrades}
+          lang={lang}
+          userName={userName}
+          onRefreshData={onRefreshData}
+        />
+      )}
 
       {/* Primary KPI Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -608,3 +628,4 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     </div>
   );
 };
+

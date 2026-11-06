@@ -482,3 +482,4 @@ CREATE TABLE public.notifications (
     </div>
   );
 };
+

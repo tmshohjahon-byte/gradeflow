@@ -287,6 +287,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
             <button
               onClick={() => {
+                onNavigateTab("admin");
+                setMobileMenuOpen(false);
+              }}
+              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium ${
+                activeTab === "admin"
+                  ? "bg-indigo-600/20 text-indigo-400 font-bold"
+                  : "text-slate-300 hover:bg-slate-800/50"
+              }`}
+            >
+              Admin Panel (Dars jadvali)
+            </button>
+            <button
+              onClick={() => {
                 onNavigateTab("notifications");
                 setMobileMenuOpen(false);
               }}
@@ -309,3 +322,4 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
+

@@ -355,3 +355,4 @@ export const GradesView: React.FC<GradesViewProps> = ({
     </div>
   );
 };
+

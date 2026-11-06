@@ -7,7 +7,3 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
-
-hello if you need supabase api url and public api here:
-url: https://pnlhyuzpveicmaugaksx.supabase.co/rest/v1/
-public api: sb_publishable_ho4xxMhDNsXRUqFmABzZUA_c_AFm-NN

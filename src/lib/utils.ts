@@ -59,3 +59,4 @@ export function getGradeBadgeColor(grade: number): {
       };
   }
 }
+

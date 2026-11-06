@@ -494,3 +494,4 @@ export type TranslationKey = keyof typeof translations.uz;
 export function useTranslation(lang: Language = 'uz') {
   return translations[lang] || translations.uz;
 }
+

@@ -282,3 +282,4 @@ export const QuickAddGradeModal: React.FC<QuickAddGradeModalProps> = ({
     </div>
   );
 };
+
