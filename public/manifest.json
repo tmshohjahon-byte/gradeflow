@@ -1,0 +1,19 @@
+{
+  "name": "GradeFlow — AI Akademik Mentor",
+  "short_name": "GradeFlow",
+  "description": "Talabalar va o'quvchilar uchun zamonaviy akademik monitoring va AI mentor",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090D16",
+  "theme_color": "#090D16",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

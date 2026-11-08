@@ -11,6 +11,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "GradeFlow — Intellektual Ta'lim Monitoringi & AI Mentor",
   description: "Talabalar va o'quvchilar uchun zamonaviy akademik tahlil va AI mentor tizimi",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
