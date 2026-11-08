@@ -224,14 +224,14 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
       <div className="absolute top-0 right-0 -mr-10 -mt-10 w-48 h-48 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
 
       {/* Top Day Switcher */}
-      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-800/80">
         <div className="flex items-center space-x-2">
           <Calendar className="w-4 h-4 text-indigo-400" />
           <span className="text-xs font-bold text-slate-300">
             Dars jadvali kuni:
           </span>
         </div>
-        <div className="flex flex-wrap gap-1">
+        <div className="flex items-center space-x-1 overflow-x-auto scrollbar-none py-1 -mx-1 px-1">
           {daysInfo.map((d) => {
             const isSelected = activeDay === d.id;
             const isSystemToday = systemTodayKey === d.id;
@@ -240,7 +240,7 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
                 key={d.id}
                 type="button"
                 onClick={() => setActiveDay(d.id)}
-                className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all relative ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold shrink-0 transition-all relative ${
                   isSelected
                     ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
@@ -248,7 +248,7 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
               >
                 {d.short}
                 {isSystemToday && (
-                  <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-slate-900" />
                 )}
               </button>
             );
@@ -301,14 +301,14 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
           return (
             <div
               key={`${sub.id}-${idx}`}
-              className="py-3 flex flex-col md:flex-row md:items-center justify-between gap-3"
+              className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
             >
               <div className="flex items-center space-x-3">
-                <span className="w-7 h-7 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold flex items-center justify-center text-slate-300">
+                <span className="w-7 h-7 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold flex items-center justify-center text-slate-300 shrink-0">
                   {idx + 1}
                 </span>
                 <span
-                  className="w-3 h-3 rounded-full"
+                  className="w-3 h-3 rounded-full shrink-0"
                   style={{ backgroundColor: sub.color }}
                 />
                 <div>
@@ -322,7 +322,7 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
               </div>
 
               {/* Action Buttons: 5, 4, 3, 2, Olinmadi */}
-              <div className="flex items-center space-x-2 self-end md:self-auto">
+              <div className="flex items-center justify-end space-x-1.5 sm:space-x-2 self-end sm:self-auto pt-1 sm:pt-0">
                 {graded ? (
                   <div className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />

@@ -115,22 +115,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="w-full max-w-md rounded-3xl bg-[#0D1322] border border-slate-700/80 shadow-2xl overflow-hidden relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="w-full max-w-md rounded-2xl sm:rounded-3xl bg-[#0D1322] border border-slate-700/80 shadow-2xl overflow-hidden relative max-h-[92vh] flex flex-col">
         {/* Glow accent */}
         <div className="absolute top-0 right-0 -mr-12 -mt-12 w-44 h-44 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
 
         {/* Header */}
-        <div className="p-6 pb-4 flex items-center justify-between border-b border-slate-800/80 bg-slate-900/50">
+        <div className="p-4 sm:p-6 pb-3 sm:pb-4 flex items-center justify-between border-b border-slate-800/80 bg-slate-900/50 shrink-0">
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-600/30">
-              <Sparkles className="w-5 h-5" />
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-600/30 shrink-0">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white tracking-tight">
+              <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
                 {mode === "signup" ? "GradeFlow Ro'yxatdan O'tish" : "GradeFlow-ga Kirish"}
               </h3>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[10px] sm:text-[11px] text-slate-400">
                 {mode === "signup"
                   ? "Shaxsiy akademik monitoring hisobingizni yarating"
                   : "O'z baholaringiz va dars jadvalingizga kiring"}
@@ -147,7 +147,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </div>
 
         {/* Tab switcher: Kirish / Ro'yxatdan o'tish */}
-        <div className="grid grid-cols-2 p-1.5 bg-slate-900/80 border-b border-slate-800 text-xs font-semibold">
+        <div className="grid grid-cols-2 p-1 bg-slate-900/80 border-b border-slate-800 text-xs font-semibold shrink-0">
           <button
             type="button"
             onClick={() => {
@@ -181,7 +181,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-3.5 sm:space-y-4 overflow-y-auto flex-1">
           {errorMessage && (
             <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium flex items-center space-x-2 animate-in fade-in">
               <AlertCircle className="w-4 h-4 shrink-0" />

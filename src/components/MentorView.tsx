@@ -750,9 +750,10 @@ export const MentorView: React.FC<MentorViewProps> = ({
           />
           <button
             onClick={() => handleSendMessage()}
-            className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm flex items-center space-x-1.5 shadow-lg shadow-indigo-600/30 transition-all shrink-0"
+            className="px-4 sm:px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm flex items-center justify-center space-x-1.5 shadow-lg shadow-indigo-600/30 transition-all shrink-0 active:scale-95"
+            title={t.askMentor}
           >
-            <span>{t.askMentor}</span>
+            <span className="hidden sm:inline">{t.askMentor}</span>
             <Send className="w-4 h-4" />
           </button>
         </div>

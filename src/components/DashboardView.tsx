@@ -148,80 +148,80 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       )}
 
       {/* Primary KPI Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* 1. Overall GPA */}
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 transition-all group">
-          <div className="flex items-center justify-between text-slate-400 mb-3">
-            <span className="text-xs font-semibold uppercase tracking-wider">
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 transition-all group">
+          <div className="flex items-center justify-between text-slate-400 mb-2 sm:mb-3">
+            <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider truncate">
               {t.overallGpa}
             </span>
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
-              <Award className="w-4 h-4" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform shrink-0">
+              <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="flex items-baseline space-x-2">
-            <span className="text-3xl font-black text-white">
+          <div className="flex items-baseline space-x-1.5 sm:space-x-2">
+            <span className="text-2xl sm:text-3xl font-black text-white">
               {metrics.overallGpa > 0 ? metrics.overallGpa.toFixed(2) : "0.00"}
             </span>
-            <span className="text-xs text-slate-400">/ 5.0</span>
+            <span className="text-[11px] sm:text-xs text-slate-400">/ 5.0</span>
           </div>
-          <div className="mt-3 flex items-center justify-between text-xs">
-            <span className="text-slate-400">
+          <div className="mt-2 sm:mt-3 flex items-center justify-between text-[11px] sm:text-xs">
+            <span className="text-slate-400 truncate">
               {metrics.overallGpa >= 4.8
-                ? "A'lo daraja"
+                ? "A'lo"
                 : metrics.overallGpa >= 4.5
-                ? "Yaxshi natija"
+                ? "Yaxshi"
                 : metrics.overallGpa >= 4.0
                 ? "Qoniqarli"
                 : "Diqqat talab"}
             </span>
-            <span className="font-bold text-indigo-400">
+            <span className="font-bold text-indigo-400 shrink-0">
               {metrics.academicPercentage}%
             </span>
           </div>
         </div>
 
         {/* 2. Total Subjects & Grades */}
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 transition-all group">
-          <div className="flex items-center justify-between text-slate-400 mb-3">
-            <span className="text-xs font-semibold uppercase tracking-wider">
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 transition-all group">
+          <div className="flex items-center justify-between text-slate-400 mb-2 sm:mb-3">
+            <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider truncate">
               {t.totalSubjects} & {t.totalGrades}
             </span>
-            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
-              <BookOpen className="w-4 h-4" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform shrink-0">
+              <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="flex items-baseline space-x-3">
+          <div className="flex items-baseline space-x-2 sm:space-x-3">
             <div>
-              <span className="text-3xl font-black text-white">
+              <span className="text-2xl sm:text-3xl font-black text-white">
                 {metrics.totalSubjects}
               </span>
-              <span className="text-xs text-slate-400 ml-1">fan</span>
+              <span className="text-[10px] sm:text-xs text-slate-400 ml-0.5">fan</span>
             </div>
-            <span className="text-slate-600 text-xl font-light">•</span>
+            <span className="text-slate-600 text-lg sm:text-xl font-light">•</span>
             <div>
-              <span className="text-3xl font-black text-white">
+              <span className="text-2xl sm:text-3xl font-black text-white">
                 {metrics.totalGrades}
               </span>
-              <span className="text-xs text-slate-400 ml-1">baho</span>
+              <span className="text-[10px] sm:text-xs text-slate-400 ml-0.5">baho</span>
             </div>
           </div>
-          <div className="mt-3 text-xs text-slate-400 flex items-center space-x-1">
-            <span>Muntazamlik:</span>
-            <span className="text-slate-200 font-medium">
-              {metrics.totalGrades >= 15 ? "Yuqori faollik" : "O'rtacha faollik"}
+          <div className="mt-2 sm:mt-3 text-[11px] sm:text-xs text-slate-400 flex items-center space-x-1">
+            <span>Holat:</span>
+            <span className="text-slate-200 font-medium truncate">
+              {metrics.totalGrades >= 15 ? "Yuqori faol" : "Yangi boshlangan"}
             </span>
           </div>
         </div>
 
         {/* 3. Academic Improvement Indicator */}
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 transition-all group">
-          <div className="flex items-center justify-between text-slate-400 mb-3">
-            <span className="text-xs font-semibold uppercase tracking-wider">
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 transition-all group">
+          <div className="flex items-center justify-between text-slate-400 mb-2 sm:mb-3">
+            <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider truncate">
               {t.improvementIndicator}
             </span>
             <div
-              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 shrink-0 ${
                 metrics.improvementIndicator.direction === "up"
                   ? "bg-emerald-500/10 text-emerald-400"
                   : metrics.improvementIndicator.direction === "down"
@@ -230,17 +230,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               }`}
             >
               {metrics.improvementIndicator.direction === "up" ? (
-                <TrendingUp className="w-4 h-4" />
+                <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               ) : metrics.improvementIndicator.direction === "down" ? (
-                <TrendingDown className="w-4 h-4" />
+                <TrendingDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               ) : (
-                <Minus className="w-4 h-4" />
+                <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               )}
             </div>
           </div>
           <div className="flex items-baseline space-x-2">
             <span
-              className={`text-2xl font-black ${
+              className={`text-xl sm:text-2xl font-black ${
                 metrics.improvementIndicator.direction === "up"
                   ? "text-emerald-400"
                   : metrics.improvementIndicator.direction === "down"
@@ -251,51 +251,51 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {metrics.improvementIndicator.label}
             </span>
           </div>
-          <div className="mt-3 text-xs text-slate-400">
+          <div className="mt-2 sm:mt-3 text-[11px] sm:text-xs text-slate-400 truncate">
             {t.vsPreviousPeriod}
           </div>
         </div>
 
         {/* 4. Grades Distribution Breakdown (5s, 4s, 3s, 2s) */}
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 transition-all">
+        <div className="col-span-2 sm:col-span-1 lg:col-span-1 p-3.5 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 transition-all">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">
+            <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">
               {t.gradesDistribution}
             </span>
-            <span className="text-xs font-bold text-slate-300">
+            <span className="text-[11px] sm:text-xs font-bold text-slate-300">
               Jami: {metrics.totalGrades}
             </span>
           </div>
 
-          <div className="grid grid-cols-4 gap-1.5 my-2.5">
-            <div className="text-center p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-              <div className="text-[10px] text-emerald-400 font-semibold">5 (A)</div>
-              <div className="text-lg font-black text-emerald-300">
+          <div className="grid grid-cols-4 gap-1 sm:gap-1.5 my-2 sm:my-2.5">
+            <div className="text-center p-1 sm:p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <div className="text-[9px] sm:text-[10px] text-emerald-400 font-semibold">5 (A)</div>
+              <div className="text-base sm:text-lg font-black text-emerald-300">
                 {metrics.count5}
               </div>
             </div>
-            <div className="text-center p-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
-              <div className="text-[10px] text-blue-400 font-semibold">4 (B)</div>
-              <div className="text-lg font-black text-blue-300">
+            <div className="text-center p-1 sm:p-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <div className="text-[9px] sm:text-[10px] text-blue-400 font-semibold">4 (B)</div>
+              <div className="text-base sm:text-lg font-black text-blue-300">
                 {metrics.count4}
               </div>
             </div>
-            <div className="text-center p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-              <div className="text-[10px] text-amber-400 font-semibold">3 (C)</div>
-              <div className="text-lg font-black text-amber-300">
+            <div className="text-center p-1 sm:p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <div className="text-[9px] sm:text-[10px] text-amber-400 font-semibold">3 (C)</div>
+              <div className="text-base sm:text-lg font-black text-amber-300">
                 {metrics.count3}
               </div>
             </div>
-            <div className="text-center p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
-              <div className="text-[10px] text-rose-400 font-semibold">2 (F)</div>
-              <div className="text-lg font-black text-rose-300">
+            <div className="text-center p-1 sm:p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
+              <div className="text-[9px] sm:text-[10px] text-rose-400 font-semibold">2 (F)</div>
+              <div className="text-base sm:text-lg font-black text-rose-300">
                 {metrics.count2}
               </div>
             </div>
           </div>
 
           {/* Visual bar distribution */}
-          <div className="w-full h-2 rounded-full bg-slate-800 flex overflow-hidden">
+          <div className="w-full h-1.5 sm:h-2 rounded-full bg-slate-800 flex overflow-hidden">
             {metrics.totalGrades > 0 ? (
               <>
                 <div

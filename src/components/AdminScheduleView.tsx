@@ -247,7 +247,7 @@ export const AdminScheduleView: React.FC<AdminScheduleViewProps> = ({
         </div>
 
         {/* Day selector tabs */}
-        <div className="flex flex-wrap gap-2 border-b border-slate-800 pb-3">
+        <div className="flex items-center space-x-2 overflow-x-auto scrollbar-none pb-3 border-b border-slate-800/80 -mx-1 px-1">
           {daysInfo.map((d) => {
             const isRest = currentSchedule.rest_days.includes(d.id);
             const isSelected = selectedDay === d.id;
@@ -258,7 +258,7 @@ export const AdminScheduleView: React.FC<AdminScheduleViewProps> = ({
                 key={d.id}
                 type="button"
                 onClick={() => setSelectedDay(d.id)}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center space-x-2 ${
+                className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold shrink-0 transition-all flex items-center space-x-1.5 sm:space-x-2 ${
                   isSelected
                     ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
                     : isRest
@@ -268,7 +268,7 @@ export const AdminScheduleView: React.FC<AdminScheduleViewProps> = ({
               >
                 <span>{getDayName(d.id)}</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                     isSelected ? "bg-white/20 text-white" : "bg-slate-700 text-slate-300"
                   }`}
                 >

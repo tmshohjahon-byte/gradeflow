@@ -14,6 +14,7 @@ import { QuickAddGradeModal } from "@/components/QuickAddGradeModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { AuthModal } from "@/components/AuthModal";
 import { LandingPage } from "@/components/LandingPage";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 import {
   UserProfile,
   Subject,
@@ -220,7 +221,7 @@ export default function Home() {
         />
 
         {/* View Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 overflow-y-auto pb-28 md:pb-8">
           {isLoading ? (
             <div className="min-h-[50vh] flex items-center justify-center">
               <div className="flex flex-col items-center space-y-3">
@@ -312,6 +313,15 @@ export default function Home() {
           )}
         </main>
       </div>
+
+      {/* Mobile Sticky Bottom Navigation Bar */}
+      <MobileBottomNav
+        activeTab={activeTab}
+        onSelectTab={(tab) => setActiveTab(tab)}
+        onOpenAddGrade={() => handleOpenAddGrade()}
+        lang={lang}
+        notifications={notifications}
+      />
 
       {/* Quick Add / Edit Grade Modal */}
       <QuickAddGradeModal

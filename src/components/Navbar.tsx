@@ -120,13 +120,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right Action buttons */}
           <div className="flex items-center space-x-2 sm:space-x-3">
-            {/* Quick Add Grade Button */}
+            {/* Quick Add Grade Button (Desktop/Tablet) */}
             <button
               onClick={onOpenAddGrade}
-              className="flex items-center space-x-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 hover:shadow-indigo-500/40 transition-all duration-200 active:scale-95"
+              className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 hover:shadow-indigo-500/40 transition-all duration-200 active:scale-95"
             >
               <Plus className="w-4 h-4" />
-              <span className="hidden xs:inline">{t.quickAddGrade}</span>
+              <span>{t.quickAddGrade}</span>
             </button>
 
             {/* Notification Bell */}
