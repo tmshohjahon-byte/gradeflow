@@ -267,3 +267,4 @@ export async function logOutStudent(): Promise<void> {
     localStorage.removeItem(LOCAL_AUTH_USER_KEY);
   }
 }
+

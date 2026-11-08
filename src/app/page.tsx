@@ -13,6 +13,7 @@ import { AdminScheduleView } from "@/components/AdminScheduleView";
 import { QuickAddGradeModal } from "@/components/QuickAddGradeModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { AuthModal } from "@/components/AuthModal";
+import { LandingPage } from "@/components/LandingPage";
 import {
   UserProfile,
   Subject,
@@ -34,7 +35,7 @@ import {
   deleteGrade,
   DATA_CHANGE_EVENT,
 } from "@/lib/storage";
-import { defaultScheduleSettings } from "@/lib/sampleData";
+import { defaultScheduleSettings, defaultUser } from "@/lib/sampleData";
 import { calculatePerformanceMetrics } from "@/lib/analytics";
 import { analyzeAcademicPerformance, auditAndDispatchAcademicNotifications } from "@/lib/mentorEngine";
 import { logOutStudent } from "@/lib/auth";
@@ -138,6 +139,7 @@ export default function Home() {
 
   const handleLogOut = async () => {
     await logOutStudent();
+    setUser(null);
     loadAllData();
   };
 
@@ -145,6 +147,48 @@ export default function Home() {
   const currentTime = isMounted ? Date.now() : 1770000000000;
   const metrics = calculatePerformanceMetrics(subjects, grades, lang, currentTime);
   const mentorAnalysis = analyzeAcademicPerformance(subjects, grades, goals, lang, currentTime);
+
+  if (!isMounted || isLoading) {
+    return (
+      <div className="min-h-screen bg-[#090D16] flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-3">
+          <div className="w-10 h-10 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+          <span className="text-xs text-slate-400 font-medium">
+            {lang === "uz" ? "GradeFlow yuklanmoqda..." : "Loading GradeFlow..."}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // If visitor is unauthenticated, present the public Landing Page showcase
+  if (!user) {
+    return (
+      <>
+        <LandingPage
+          lang={lang}
+          onLanguageChange={handleLanguageChange}
+          onOpenAuth={(mode) => handleOpenAuth(mode)}
+          onQuickDemo={() => {
+            if (typeof window !== "undefined") {
+              localStorage.setItem("gradeflow_current_user", JSON.stringify(defaultUser));
+            }
+            setUser(defaultUser);
+            loadAllData();
+          }}
+        />
+
+        {/* Student Authentication Modal */}
+        <AuthModal
+          isOpen={isAuthOpen}
+          onClose={() => setIsAuthOpen(false)}
+          lang={lang}
+          onAuthSuccess={handleAuthSuccess}
+          initialMode={authMode}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#090D16] text-[#E2E8F0] flex flex-col font-sans">

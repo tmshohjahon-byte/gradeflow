@@ -117,7 +117,7 @@ export function setStoredLanguage(lang: Language): void {
 // ----------------------------------------------------
 // USER PROFILE
 // ----------------------------------------------------
-export async function getUserProfile(): Promise<UserProfile> {
+export async function getUserProfile(): Promise<UserProfile | null> {
   const supabase = getSupabase();
   if (supabase) {
     try {
@@ -151,11 +151,11 @@ export async function getUserProfile(): Promise<UserProfile> {
     } catch {}
   }
 
-  return readLocal<UserProfile>(STORAGE_KEYS.USER, defaultUser);
+  return null;
 }
 
 export async function updateUserProfile(profile: Partial<UserProfile>): Promise<UserProfile> {
-  const current = await getUserProfile();
+  const current = (await getUserProfile()) || defaultUser;
   const updated = { ...current, ...profile };
   
   if (typeof window !== "undefined") {

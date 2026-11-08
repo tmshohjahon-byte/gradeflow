@@ -8,7 +8,6 @@ import {
   Mail,
   User,
   GraduationCap,
-  School,
   ArrowRight,
   CheckCircle2,
   AlertCircle,
@@ -18,6 +17,7 @@ import {
 import { UserProfile, Language } from "@/types/database";
 import { translations } from "@/lib/i18n";
 import { signUpStudent, logInStudent } from "@/lib/auth";
+import { defaultUser } from "@/lib/sampleData";
 
 type AuthModalProps = {
   isOpen: boolean;
@@ -40,7 +40,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [schoolName, setSchoolName] = useState("");
   const [gradeLevel, setGradeLevel] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
@@ -80,7 +79,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           fullName: fullName.trim(),
           email: email.trim(),
           password: password,
-          schoolName: schoolName.trim() || undefined,
           gradeLevel: gradeLevel.trim() || undefined,
         });
 
@@ -264,40 +262,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           </div>
 
-          {/* Optional fields for Signup */}
+          {/* Optional Sinf / Kurs field for Signup */}
           {mode === "signup" && (
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                  <span className="flex items-center space-x-1">
-                    <School className="w-3.5 h-3.5" />
-                    <span>Maktab / OTM</span>
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  value={schoolName}
-                  onChange={(e) => setSchoolName(e.target.value)}
-                  placeholder="Prezident Maktabi..."
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                  <span className="flex items-center space-x-1">
-                    <GraduationCap className="w-3.5 h-3.5" />
-                    <span>Sinf / Kurs</span>
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  value={gradeLevel}
-                  onChange={(e) => setGradeLevel(e.target.value)}
-                  placeholder="10-sinf, 1-kurs..."
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                <span className="flex items-center space-x-1.5">
+                  <GraduationCap className="w-3.5 h-3.5" />
+                  <span>Sinf yoki Bosqich (ixtiyoriy)</span>
+                </span>
+              </label>
+              <input
+                type="text"
+                value={gradeLevel}
+                onChange={(e) => setGradeLevel(e.target.value)}
+                placeholder="Masalan: 10-sinf, 1-kurs, Litsey..."
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
             </div>
           )}
 
@@ -310,6 +290,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <span>{isSubmitting ? "Jarayonda..." : mode === "signup" ? "Ro'yxatdan O'tish" : "Tizimga Kirish"}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
+
+          {/* Quick Login for Shohjahon */}
+          {mode === "login" && (
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("gradeflow_current_user", JSON.stringify(defaultUser));
+                }
+                onAuthSuccess(defaultUser);
+                onClose();
+              }}
+              className="w-full mt-2 py-2 px-3 rounded-xl bg-indigo-950/40 hover:bg-indigo-900/50 border border-indigo-500/30 text-xs text-indigo-300 font-semibold flex items-center justify-center space-x-1.5 transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Shohjahon hisobiga tezkor kirish</span>
+            </button>
+          )}
         </form>
 
         {/* Footer info */}
