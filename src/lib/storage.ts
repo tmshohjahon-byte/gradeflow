@@ -40,6 +40,25 @@ export function notifyDataChange() {
 // ----------------------------------------------------
 // LOCAL STORAGE CORE HELPERS & AUTO-RESET CHECK
 // ----------------------------------------------------
+export function getActiveUserId(): string {
+  if (typeof window === "undefined") return defaultUser.id;
+  try {
+    const raw = localStorage.getItem("gradeflow_current_user");
+    if (raw) {
+      const u = JSON.parse(raw);
+      if (u?.id) return u.id;
+    }
+  } catch {}
+  return defaultUser.id;
+}
+
+export function getUserKey(baseKey: string, userId: string = getActiveUserId()): string {
+  if (!userId || userId === defaultUser.id) {
+    return baseKey;
+  }
+  return `${baseKey}_${userId}`;
+}
+
 function ensureShohjahonReset() {
   if (typeof window === "undefined") return;
   const v = localStorage.getItem(STORAGE_KEYS.VERSION);
@@ -110,18 +129,41 @@ export async function getUserProfile(): Promise<UserProfile> {
           .eq("id", user.id)
           .single();
         if (data && !error) return data as UserProfile;
+
+        return {
+          id: user.id,
+          email: user.email || "",
+          full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "O'quvchi",
+          school_name: user.user_metadata?.school_name || "Akademik ta'lim",
+          grade_level: user.user_metadata?.grade_level || "Talaba / O'quvchi",
+          created_at: user.created_at || new Date().toISOString(),
+        };
       }
     } catch (e) {
       console.warn("Supabase profile fetch error, fallback to local:", e);
     }
   }
+
+  if (typeof window !== "undefined") {
+    try {
+      const active = localStorage.getItem("gradeflow_current_user");
+      if (active) return JSON.parse(active);
+    } catch {}
+  }
+
   return readLocal<UserProfile>(STORAGE_KEYS.USER, defaultUser);
 }
 
 export async function updateUserProfile(profile: Partial<UserProfile>): Promise<UserProfile> {
   const current = await getUserProfile();
   const updated = { ...current, ...profile };
-  writeLocal(STORAGE_KEYS.USER, updated);
+  
+  if (typeof window !== "undefined") {
+    localStorage.setItem("gradeflow_current_user", JSON.stringify(updated));
+    if (updated.id === defaultUser.id) {
+      writeLocal(STORAGE_KEYS.USER, updated);
+    }
+  }
 
   const supabase = getSupabase();
   if (supabase) {
@@ -140,13 +182,27 @@ export async function updateUserProfile(profile: Partial<UserProfile>): Promise<
 // SUBJECTS
 // ----------------------------------------------------
 export async function getSubjects(): Promise<Subject[]> {
-  const localSubjects = readLocal<Subject[]>(STORAGE_KEYS.SUBJECTS, defaultSubjects);
+  const userId = getActiveUserId();
+  const subKey = getUserKey(STORAGE_KEYS.SUBJECTS, userId);
+
+  let initialFallback = defaultSubjects;
+  if (userId !== defaultUser.id) {
+    // For a newly registered student, provide clean starter subjects
+    initialFallback = defaultSubjects.map((s, idx) => ({
+      ...s,
+      id: `usr-${userId.slice(0, 6)}-sub-${idx + 1}`,
+      user_id: userId,
+    }));
+  }
+
+  const localSubjects = readLocal<Subject[]>(subKey, initialFallback);
   const supabase = getSupabase();
   if (supabase) {
     try {
       const { data, error } = await supabase
         .from("subjects")
         .select("*")
+        .eq("user_id", userId)
         .order("name", { ascending: true });
       if (data && !error && data.length > 0) {
         // Merge Supabase subjects with local styling (color/icon/code)
@@ -154,7 +210,7 @@ export async function getSubjects(): Promise<Subject[]> {
           const match = localSubjects.find((l) => l.id === remote.id || l.name === remote.name);
           return {
             id: remote.id,
-            user_id: remote.user_id || defaultUser.id,
+            user_id: remote.user_id || userId,
             name: remote.name,
             code: match?.code || remote.name.slice(0, 3).toUpperCase(),
             color: match?.color || "#6366F1",
@@ -163,7 +219,7 @@ export async function getSubjects(): Promise<Subject[]> {
             created_at: remote.created_at || new Date().toISOString(),
           };
         });
-        writeLocal(STORAGE_KEYS.SUBJECTS, merged);
+        writeLocal(subKey, merged);
         return merged;
       }
     } catch (e) {
@@ -174,15 +230,19 @@ export async function getSubjects(): Promise<Subject[]> {
 }
 
 export async function addSubject(subject: Omit<Subject, "id" | "created_at">): Promise<Subject> {
+  const userId = getActiveUserId();
+  const subKey = getUserKey(STORAGE_KEYS.SUBJECTS, userId);
+
   const newSubject: Subject = {
     ...subject,
+    user_id: subject.user_id || userId,
     id: "sub-" + Math.random().toString(36).substring(2, 9),
     created_at: new Date().toISOString(),
   };
 
   const list = await getSubjects();
   const updated = [...list, newSubject];
-  writeLocal(STORAGE_KEYS.SUBJECTS, updated);
+  writeLocal(subKey, updated);
 
   const supabase = getSupabase();
   if (supabase) {
@@ -190,7 +250,7 @@ export async function addSubject(subject: Omit<Subject, "id" | "created_at">): P
       await supabase.from("subjects").insert({
         id: newSubject.id,
         name: newSubject.name,
-        user_id: newSubject.user_id || defaultUser.id,
+        user_id: newSubject.user_id || userId,
       });
     } catch (e) {
       console.warn("Supabase subject insert failed:", e);
@@ -200,8 +260,9 @@ export async function addSubject(subject: Omit<Subject, "id" | "created_at">): P
   notifyDataChange();
   return newSubject;
 }
-
 export async function updateSubject(id: string, updates: Partial<Subject>): Promise<Subject | null> {
+  const userId = getActiveUserId();
+  const subKey = getUserKey(STORAGE_KEYS.SUBJECTS, userId);
   const list = await getSubjects();
   let updatedItem: Subject | null = null;
   const updated = list.map((item) => {
@@ -212,7 +273,7 @@ export async function updateSubject(id: string, updates: Partial<Subject>): Prom
     return item;
   });
 
-  writeLocal(STORAGE_KEYS.SUBJECTS, updated);
+  writeLocal(subKey, updated);
 
   const supabase = getSupabase();
   if (supabase && updatedItem) {
@@ -228,21 +289,26 @@ export async function updateSubject(id: string, updates: Partial<Subject>): Prom
 }
 
 export async function deleteSubject(id: string): Promise<void> {
+  const userId = getActiveUserId();
+  const subKey = getUserKey(STORAGE_KEYS.SUBJECTS, userId);
+  const gradesKey = getUserKey(STORAGE_KEYS.GRADES, userId);
+  const goalsKey = getUserKey(STORAGE_KEYS.GOALS, userId);
+
   const list = await getSubjects();
   writeLocal(
-    STORAGE_KEYS.SUBJECTS,
+    subKey,
     list.filter((s) => s.id !== id)
   );
 
   const grades = await getGrades();
   writeLocal(
-    STORAGE_KEYS.GRADES,
+    gradesKey,
     grades.filter((g) => g.subject_id !== id)
   );
 
   const goals = await getGoals();
   writeLocal(
-    STORAGE_KEYS.GOALS,
+    goalsKey,
     goals.filter((g) => g.subject_id !== id)
   );
 
@@ -262,12 +328,16 @@ export async function deleteSubject(id: string): Promise<void> {
 // GRADES
 // ----------------------------------------------------
 export async function getGrades(): Promise<Grade[]> {
+  const userId = getActiveUserId();
+  const gradesKey = getUserKey(STORAGE_KEYS.GRADES, userId);
+
   const supabase = getSupabase();
   if (supabase) {
     try {
       const { data, error } = await supabase
         .from("grades")
         .select("*")
+        .eq("user_id", userId)
         .order("date", { ascending: false });
       if (data && !error && data.length > 0) {
         const mapped: Grade[] = data.map((remote) => ({
@@ -280,33 +350,37 @@ export async function getGrades(): Promise<Grade[]> {
           type: remote.type || "classwork",
           created_at: remote.created_at || new Date().toISOString(),
         }));
-        writeLocal(STORAGE_KEYS.GRADES, mapped);
+        writeLocal(gradesKey, mapped);
         return mapped;
       }
     } catch (e) {
       console.warn("Supabase grades fetch error, fallback to local:", e);
     }
   }
-  return readLocal<Grade[]>(STORAGE_KEYS.GRADES, defaultGrades);
+  return readLocal<Grade[]>(gradesKey, defaultGrades);
 }
 
 export async function addGrade(grade: Omit<Grade, "id" | "created_at">): Promise<Grade> {
+  const userId = getActiveUserId();
+  const gradesKey = getUserKey(STORAGE_KEYS.GRADES, userId);
+
   const newGrade: Grade = {
     ...grade,
+    user_id: grade.user_id || userId,
     id: "g-" + Math.random().toString(36).substring(2, 9),
     created_at: new Date().toISOString(),
   };
 
   const list = await getGrades();
   const updated = [newGrade, ...list];
-  writeLocal(STORAGE_KEYS.GRADES, updated);
+  writeLocal(gradesKey, updated);
 
   const supabase = getSupabase();
   if (supabase) {
     try {
       await supabase.from("grades").insert({
         id: newGrade.id,
-        user_id: newGrade.user_id || defaultUser.id,
+        user_id: newGrade.user_id,
         subject_id: newGrade.subject_id,
         grade: newGrade.grade_value,
         date: newGrade.date,
@@ -322,6 +396,9 @@ export async function addGrade(grade: Omit<Grade, "id" | "created_at">): Promise
 }
 
 export async function updateGrade(id: string, updates: Partial<Grade>): Promise<Grade | null> {
+  const userId = getActiveUserId();
+  const gradesKey = getUserKey(STORAGE_KEYS.GRADES, userId);
+
   const list = await getGrades();
   let updatedItem: Grade | null = null;
   const updated = list.map((item) => {
@@ -332,7 +409,7 @@ export async function updateGrade(id: string, updates: Partial<Grade>): Promise<
     return item;
   });
 
-  writeLocal(STORAGE_KEYS.GRADES, updated);
+  writeLocal(gradesKey, updated);
 
   const supabase = getSupabase();
   if (supabase && updatedItem) {
@@ -355,9 +432,12 @@ export async function updateGrade(id: string, updates: Partial<Grade>): Promise<
 }
 
 export async function deleteGrade(id: string): Promise<void> {
+  const userId = getActiveUserId();
+  const gradesKey = getUserKey(STORAGE_KEYS.GRADES, userId);
+
   const list = await getGrades();
   writeLocal(
-    STORAGE_KEYS.GRADES,
+    gradesKey,
     list.filter((g) => g.id !== id)
   );
 
@@ -377,10 +457,16 @@ export async function deleteGrade(id: string): Promise<void> {
 // ACADEMIC GOALS
 // ----------------------------------------------------
 export async function getGoals(): Promise<AcademicGoal[]> {
+  const userId = getActiveUserId();
+  const goalsKey = getUserKey(STORAGE_KEYS.GOALS, userId);
+
   const supabase = getSupabase();
   if (supabase) {
     try {
-      const { data, error } = await supabase.from("academic_goals").select("*");
+      const { data, error } = await supabase
+        .from("academic_goals")
+        .select("*")
+        .eq("user_id", userId);
       if (data && !error && data.length > 0) {
         const mapped: AcademicGoal[] = data.map((remote) => ({
           id: remote.id,
@@ -392,17 +478,20 @@ export async function getGoals(): Promise<AcademicGoal[]> {
           created_at: remote.created_at || new Date().toISOString(),
           updated_at: remote.updated_at,
         }));
-        writeLocal(STORAGE_KEYS.GOALS, mapped);
+        writeLocal(goalsKey, mapped);
         return mapped;
       }
     } catch (e) {
       console.warn("Supabase goals fetch error, fallback to local:", e);
     }
   }
-  return readLocal<AcademicGoal[]>(STORAGE_KEYS.GOALS, defaultGoals);
+  return readLocal<AcademicGoal[]>(goalsKey, defaultGoals);
 }
 
 export async function saveGoal(goal: Omit<AcademicGoal, "id" | "created_at"> & { id?: string }): Promise<AcademicGoal> {
+  const userId = getActiveUserId();
+  const goalsKey = getUserKey(STORAGE_KEYS.GOALS, userId);
+
   const list = await getGoals();
   const existingIdx = list.findIndex(
     (g) => g.id === goal.id || g.subject_id === goal.subject_id
@@ -422,7 +511,7 @@ export async function saveGoal(goal: Omit<AcademicGoal, "id" | "created_at"> & {
   } else {
     finalGoal = {
       id: "goal-" + Math.random().toString(36).substring(2, 9),
-      user_id: goal.user_id || defaultUser.id,
+      user_id: goal.user_id || userId,
       subject_id: goal.subject_id,
       target_grade: goal.target_grade,
       target_date: goal.target_date,
@@ -432,7 +521,7 @@ export async function saveGoal(goal: Omit<AcademicGoal, "id" | "created_at"> & {
     updated = [...list, finalGoal];
   }
 
-  writeLocal(STORAGE_KEYS.GOALS, updated);
+  writeLocal(goalsKey, updated);
 
   const supabase = getSupabase();
   if (supabase) {
@@ -453,9 +542,12 @@ export async function saveGoal(goal: Omit<AcademicGoal, "id" | "created_at"> & {
 }
 
 export async function deleteGoal(id: string): Promise<void> {
+  const userId = getActiveUserId();
+  const goalsKey = getUserKey(STORAGE_KEYS.GOALS, userId);
+
   const list = await getGoals();
   writeLocal(
-    STORAGE_KEYS.GOALS,
+    goalsKey,
     list.filter((g) => g.id !== id)
   );
 
@@ -475,25 +567,32 @@ export async function deleteGoal(id: string): Promise<void> {
 // NOTIFICATIONS
 // ----------------------------------------------------
 export async function getNotifications(): Promise<Notification[]> {
+  const userId = getActiveUserId();
+  const notifKey = getUserKey(STORAGE_KEYS.NOTIFICATIONS, userId);
+
   const supabase = getSupabase();
   if (supabase) {
     try {
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
       if (data && !error && data.length > 0) {
-        writeLocal(STORAGE_KEYS.NOTIFICATIONS, data);
+        writeLocal(notifKey, data);
         return data as Notification[];
       }
     } catch (e) {
       console.warn("Supabase notif fetch error, fallback to local:", e);
     }
   }
-  return readLocal<Notification[]>(STORAGE_KEYS.NOTIFICATIONS, defaultNotifications);
+  return readLocal<Notification[]>(notifKey, defaultNotifications);
 }
 
 export async function addNotificationIfNotExists(notif: Omit<Notification, "id" | "created_at">): Promise<Notification | null> {
+  const userId = getActiveUserId();
+  const notifKey = getUserKey(STORAGE_KEYS.NOTIFICATIONS, userId);
+
   const list = await getNotifications();
   if (notif.dedup_key) {
     const exists = list.some((n) => n.dedup_key === notif.dedup_key);
@@ -502,19 +601,20 @@ export async function addNotificationIfNotExists(notif: Omit<Notification, "id" 
 
   const newNotif: Notification = {
     ...notif,
+    user_id: notif.user_id || userId,
     id: "notif-" + Math.random().toString(36).substring(2, 9),
     created_at: new Date().toISOString(),
   };
 
   const updated = [newNotif, ...list];
-  writeLocal(STORAGE_KEYS.NOTIFICATIONS, updated);
+  writeLocal(notifKey, updated);
 
   const supabase = getSupabase();
   if (supabase) {
     try {
       await supabase.from("notifications").insert({
         id: newNotif.id,
-        user_id: newNotif.user_id || defaultUser.id,
+        user_id: newNotif.user_id,
         title: newNotif.title,
         message: newNotif.message,
         is_read: newNotif.is_read,
@@ -529,9 +629,12 @@ export async function addNotificationIfNotExists(notif: Omit<Notification, "id" 
 }
 
 export async function markNotificationAsRead(id: string): Promise<void> {
+  const userId = getActiveUserId();
+  const notifKey = getUserKey(STORAGE_KEYS.NOTIFICATIONS, userId);
+
   const list = await getNotifications();
   const updated = list.map((n) => (n.id === id ? { ...n, is_read: true } : n));
-  writeLocal(STORAGE_KEYS.NOTIFICATIONS, updated);
+  writeLocal(notifKey, updated);
 
   const supabase = getSupabase();
   if (supabase) {
@@ -546,9 +649,12 @@ export async function markNotificationAsRead(id: string): Promise<void> {
 }
 
 export async function markAllNotificationsAsRead(): Promise<void> {
+  const userId = getActiveUserId();
+  const notifKey = getUserKey(STORAGE_KEYS.NOTIFICATIONS, userId);
+
   const list = await getNotifications();
   const updated = list.map((n) => ({ ...n, is_read: true }));
-  writeLocal(STORAGE_KEYS.NOTIFICATIONS, updated);
+  writeLocal(notifKey, updated);
 
   const supabase = getSupabase();
   if (supabase) {
@@ -563,7 +669,9 @@ export async function markAllNotificationsAsRead(): Promise<void> {
 }
 
 export async function clearAllNotifications(): Promise<void> {
-  writeLocal(STORAGE_KEYS.NOTIFICATIONS, []);
+  const userId = getActiveUserId();
+  const notifKey = getUserKey(STORAGE_KEYS.NOTIFICATIONS, userId);
+  writeLocal(notifKey, []);
   notifyDataChange();
 }
 
@@ -571,12 +679,16 @@ export async function clearAllNotifications(): Promise<void> {
 // TIMETABLE & REST DAYS (ADMIN PANEL)
 // ----------------------------------------------------
 export async function getScheduleSettings(): Promise<ScheduleSettings> {
-  return readLocal<ScheduleSettings>(STORAGE_KEYS.SCHEDULE, defaultScheduleSettings);
+  const userId = getActiveUserId();
+  const schedKey = getUserKey(STORAGE_KEYS.SCHEDULE, userId);
+  return readLocal<ScheduleSettings>(schedKey, defaultScheduleSettings);
 }
 
 export async function saveScheduleSettings(settings: ScheduleSettings): Promise<ScheduleSettings> {
+  const userId = getActiveUserId();
+  const schedKey = getUserKey(STORAGE_KEYS.SCHEDULE, userId);
   const updated = { ...settings, updated_at: new Date().toISOString() };
-  writeLocal(STORAGE_KEYS.SCHEDULE, updated);
+  writeLocal(schedKey, updated);
   notifyDataChange();
   return updated;
 }

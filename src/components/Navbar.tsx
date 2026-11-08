@@ -10,6 +10,12 @@ import {
   Menu,
   X,
   TrendingUp,
+  UserPlus,
+  LogIn,
+  LogOut,
+  ChevronDown,
+  User,
+  Shield,
 } from "lucide-react";
 import { Language, UserProfile, Notification } from "@/types/database";
 import { translations } from "@/lib/i18n";
@@ -25,6 +31,8 @@ type NavbarProps = {
   onOpenSettings: () => void;
   onNavigateTab: (tab: string) => void;
   activeTab: string;
+  onOpenAuth: (mode?: "login" | "signup") => void;
+  onLogOut: () => void;
 };
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -38,9 +46,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSettings,
   onNavigateTab,
   activeTab,
+  onOpenAuth,
+  onLogOut,
 }) => {
   const t = translations[lang] || translations.uz;
   const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
@@ -139,7 +150,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Language Switcher Dropdown */}
             <div className="relative">
               <button
-                onClick={() => setLangMenuOpen(!langMenuOpen)}
+                onClick={() => {
+                  setLangMenuOpen(!langMenuOpen);
+                  setUserMenuOpen(false);
+                }}
                 className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900/70 border border-slate-800/80 text-xs font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white transition-colors"
                 title={t.languageSetting}
               >
@@ -186,30 +200,114 @@ export const Navbar: React.FC<NavbarProps> = ({
               <SettingsIcon className="w-4 h-4" />
             </button>
 
-            {/* User Profile Info */}
-            {user && (
-              <div className="hidden sm:flex items-center space-x-2 pl-2 border-l border-slate-800">
-                {user.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={user.avatar_url}
-                    alt={user.full_name}
-                    className="w-8 h-8 rounded-full border border-slate-700 object-cover"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-indigo-900/50 border border-indigo-700/50 flex items-center justify-center text-xs font-bold text-indigo-300">
-                    {user.full_name.slice(0, 2).toUpperCase()}
+            {/* Quick Register / Share Button */}
+            <button
+              onClick={() => onOpenAuth("signup")}
+              className="hidden md:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500/10 to-purple-500/10 hover:from-indigo-500/20 hover:to-purple-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition-all duration-200"
+              title="Yangi o'quvchi hisobini yaratish"
+            >
+              <UserPlus className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Ro'yxatdan o'tish</span>
+            </button>
+
+            {/* User Profile / Account Switcher Dropdown */}
+            {user ? (
+              <div className="relative pl-1">
+                <button
+                  onClick={() => {
+                    setUserMenuOpen(!userMenuOpen);
+                    setLangMenuOpen(false);
+                  }}
+                  className="flex items-center space-x-2 p-1 sm:px-2 sm:py-1 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800/80 text-left transition-colors"
+                >
+                  {user.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={user.avatar_url}
+                      alt={user.full_name}
+                      className="w-8 h-8 rounded-full border border-slate-700 object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-indigo-900/50 border border-indigo-700/50 flex items-center justify-center text-xs font-bold text-indigo-300">
+                      {user.full_name ? user.full_name.slice(0, 2).toUpperCase() : "GF"}
+                    </div>
+                  )}
+                  <div className="hidden xl:block text-left">
+                    <div className="text-xs font-semibold text-slate-200 leading-tight flex items-center space-x-1">
+                      <span>{user.full_name}</span>
+                    </div>
+                    <div className="text-[10px] text-slate-400">
+                      {user.grade_level || "Talaba / O'quvchi"}
+                    </div>
+                  </div>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
+                </button>
+
+                {/* User Dropdown Menu */}
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-slate-900 border border-slate-700/80 shadow-2xl backdrop-blur-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="p-3 bg-slate-800/50 rounded-xl mb-2">
+                      <div className="font-bold text-sm text-white flex items-center justify-between">
+                        <span>{user.full_name}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          Faol
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-400 truncate mt-0.5">
+                        {user.email || "shohjahon@gradeflow.uz"}
+                      </div>
+                      <div className="text-[11px] text-indigo-400 font-medium mt-1">
+                        {user.school_name || "Akademik ta'lim"} • {user.grade_level || "10-sinf"}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 text-xs">
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          onOpenAuth("signup");
+                        }}
+                        className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 hover:text-white transition-colors"
+                      >
+                        <UserPlus className="w-4 h-4 text-indigo-400" />
+                        <span>Yangi hisob ochish (Ro'yxatdan o'tish)</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          onOpenAuth("login");
+                        }}
+                        className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 hover:text-white transition-colors"
+                      >
+                        <LogIn className="w-4 h-4 text-emerald-400" />
+                        <span>Boshqa hisobga kirish (Login)</span>
+                      </button>
+
+                      <div className="border-t border-slate-800 my-1"></div>
+
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          onLogOut();
+                        }}
+                        className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4 text-rose-400" />
+                        <span>Hisobdan chiqish</span>
+                      </button>
+                    </div>
                   </div>
                 )}
-                <div className="hidden xl:block text-left">
-                  <div className="text-xs font-semibold text-slate-200 leading-tight">
-                    {user.full_name}
-                  </div>
-                  <div className="text-[10px] text-slate-400">
-                    {user.grade_level || "10-sinf"}
-                  </div>
-                </div>
               </div>
+            ) : (
+              <button
+                onClick={() => onOpenAuth("login")}
+                className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-md transition-colors"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Kirish</span>
+              </button>
             )}
           </div>
         </div>
@@ -316,10 +414,34 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </span>
               )}
             </button>
+
+            <div className="pt-2 border-t border-slate-800 flex space-x-2">
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenAuth("signup");
+                }}
+                className="flex-1 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold flex items-center justify-center space-x-1"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Ro'yxatdan o'tish</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenAuth("login");
+                }}
+                className="flex-1 py-2 rounded-lg bg-slate-800 text-slate-200 text-xs font-semibold flex items-center justify-center space-x-1"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Kirish</span>
+              </button>
+            </div>
           </div>
         )}
       </div>
     </header>
   );
 };
+
 

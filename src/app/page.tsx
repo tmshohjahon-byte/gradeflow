@@ -12,6 +12,7 @@ import { NotificationsView } from "@/components/NotificationsView";
 import { AdminScheduleView } from "@/components/AdminScheduleView";
 import { QuickAddGradeModal } from "@/components/QuickAddGradeModal";
 import { SettingsModal } from "@/components/SettingsModal";
+import { AuthModal } from "@/components/AuthModal";
 import {
   UserProfile,
   Subject,
@@ -36,6 +37,7 @@ import {
 import { defaultScheduleSettings } from "@/lib/sampleData";
 import { calculatePerformanceMetrics } from "@/lib/analytics";
 import { analyzeAcademicPerformance, auditAndDispatchAcademicNotifications } from "@/lib/mentorEngine";
+import { logOutStudent } from "@/lib/auth";
 
 export default function Home() {
   const [lang, setLang] = useState<Language>("uz");
@@ -56,6 +58,8 @@ export default function Home() {
   const [gradeToEdit, setGradeToEdit] = useState<Grade | null>(null);
   const [defaultGradeSubjectId, setDefaultGradeSubjectId] = useState<string | undefined>(undefined);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
 
   // Load all data
   const loadAllData = useCallback(async () => {
@@ -122,6 +126,21 @@ export default function Home() {
     loadAllData();
   };
 
+  const handleOpenAuth = (mode: "login" | "signup" = "signup") => {
+    setAuthMode(mode);
+    setIsAuthOpen(true);
+  };
+
+  const handleAuthSuccess = (newUser: UserProfile) => {
+    setUser(newUser);
+    loadAllData();
+  };
+
+  const handleLogOut = async () => {
+    await logOutStudent();
+    loadAllData();
+  };
+
   // Dynamic calculations with stable reference
   const currentTime = isMounted ? Date.now() : 1770000000000;
   const metrics = calculatePerformanceMetrics(subjects, grades, lang, currentTime);
@@ -141,6 +160,8 @@ export default function Home() {
         onOpenSettings={() => setIsSettingsOpen(true)}
         onNavigateTab={(tab) => setActiveTab(tab)}
         activeTab={activeTab}
+        onOpenAuth={handleOpenAuth}
+        onLogOut={handleLogOut}
       />
 
       {/* Main Workspace with Sidebar */}
@@ -271,6 +292,15 @@ export default function Home() {
         lang={lang}
         onLanguageChange={handleLanguageChange}
         onRefreshData={loadAllData}
+      />
+
+      {/* Student Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        lang={lang}
+        onAuthSuccess={handleAuthSuccess}
+        initialMode={authMode}
       />
     </div>
   );
