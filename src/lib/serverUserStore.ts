@@ -13,8 +13,40 @@ export type StoredUser = {
   createdAt: string;
 };
 
-const DATA_DIR = path.join(process.cwd(), "data");
+// Serverless-friendly data path: on Vercel / AWS Lambda, process.cwd() is read-only.
+const IS_SERVERLESS = Boolean(
+  process.env.VERCEL ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.NEXT_RUNTIME === "edge"
+);
+
+const DATA_DIR = IS_SERVERLESS
+  ? path.join("/tmp", "gradeflow_data")
+  : path.join(process.cwd(), "data");
+
 const USERS_FILE = path.join(DATA_DIR, "users.json");
+
+// Pre-seeded initial users (so existing accounts like Shohjahon's work out of the box in serverless)
+const DEFAULT_SEED_USERS: StoredUser[] = [
+  {
+    id: "usr-mihysvu",
+    email: "tmshohjahon@gmail.com",
+    fullName: "shohjahon",
+    passwordHash: "e20df790d602d070a15d4587589ab954:184e9789cfc3659e5b32b32408a6e5608a066f3fa1fdbf3c7b15cccf0612546a5c1e7e1975f1de2170896aaead018793e0f08b20582f2d496ea8469239e47560",
+    gradeLevel: "9",
+    schoolName: "Akademik ta'lim",
+    createdAt: "2026-11-08T17:25:24.051Z"
+  }
+];
+
+// Persistent global cache in memory across warm lambda invocations
+const globalUserStore = globalThis as unknown as {
+  __gradeflow_users_cache__?: StoredUser[];
+};
+
+if (!globalUserStore.__gradeflow_users_cache__) {
+  globalUserStore.__gradeflow_users_cache__ = [...DEFAULT_SEED_USERS];
+}
 
 function ensureFileExists() {
   try {
@@ -22,30 +54,40 @@ function ensureFileExists() {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
     if (!fs.existsSync(USERS_FILE)) {
-      fs.writeFileSync(USERS_FILE, JSON.stringify([], null, 2), "utf8");
+      fs.writeFileSync(USERS_FILE, JSON.stringify(globalUserStore.__gradeflow_users_cache__, null, 2), "utf8");
     }
   } catch (e) {
-    console.error("Failed to ensure users.json exists:", e);
+    // Graceful catch for read-only or restricted environments
+    console.warn("Storage notice (non-fatal):", e);
   }
 }
 
 export function getAllUsers(): StoredUser[] {
   ensureFileExists();
   try {
-    const raw = fs.readFileSync(USERS_FILE, "utf8");
-    return raw ? JSON.parse(raw) : [];
+    if (fs.existsSync(USERS_FILE)) {
+      const raw = fs.readFileSync(USERS_FILE, "utf8");
+      if (raw) {
+        const fileUsers: StoredUser[] = JSON.parse(raw);
+        // Merge file users into global cache
+        if (Array.isArray(fileUsers) && fileUsers.length > 0) {
+          globalUserStore.__gradeflow_users_cache__ = fileUsers;
+        }
+      }
+    }
   } catch (e) {
-    console.error("Error reading users.json:", e);
-    return [];
+    console.warn("Notice: Reading users from memory cache:", e);
   }
+  return globalUserStore.__gradeflow_users_cache__ || DEFAULT_SEED_USERS;
 }
 
 export function saveAllUsers(users: StoredUser[]): void {
+  globalUserStore.__gradeflow_users_cache__ = users;
   ensureFileExists();
   try {
     fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), "utf8");
   } catch (e) {
-    console.error("Error writing users.json:", e);
+    console.warn("Notice: Persisting users to memory only (read-only filesystem):", e);
   }
 }
 
