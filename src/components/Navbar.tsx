@@ -80,13 +80,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onNavigateTab("dashboard")}
               className="flex items-center space-x-2.5 text-left group"
             >
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform duration-200">
-                <Sparkles className="w-5 h-5 text-white" />
+              <div className="w-9 h-9 rounded-xl overflow-hidden border border-indigo-500/40 shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform duration-200 bg-[#0D1322] shrink-0 p-0.5">
+                <img
+                  src="/logo.jpg"
+                  alt="GradeFlow Logo"
+                  className="w-full h-full object-cover rounded-lg"
+                />
               </div>
               <div>
                 <div className="flex items-center space-x-1.5">
-                  <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-                    {t.appName}
+                  <span className="font-extrabold text-lg tracking-tight text-white">
+                    Grade<span className="bg-gradient-to-r from-cyan-400 via-sky-400 to-fuchsia-400 bg-clip-text text-transparent">Flow</span>
                   </span>
                   <span className="px-1.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                     AI Mentor

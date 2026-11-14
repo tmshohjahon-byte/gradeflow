@@ -35,6 +35,7 @@ import {
   setStoredLanguage,
   deleteGrade,
   DATA_CHANGE_EVENT,
+  syncUserDataWithCloud,
 } from "@/lib/storage";
 import { defaultScheduleSettings, defaultUser } from "@/lib/sampleData";
 import { calculatePerformanceMetrics } from "@/lib/analytics";
@@ -66,8 +67,12 @@ export default function Home() {
   // Load all data
   const loadAllData = useCallback(async () => {
     try {
-      const [u, s, g, goalsData, notifs, sched] = await Promise.all([
-        getUserProfile(),
+      const u = await getUserProfile();
+      if (u?.id) {
+        await syncUserDataWithCloud(u.id);
+      }
+
+      const [s, g, goalsData, notifs, sched] = await Promise.all([
         getSubjects(),
         getGrades(),
         getGoals(),
@@ -170,13 +175,6 @@ export default function Home() {
           lang={lang}
           onLanguageChange={handleLanguageChange}
           onOpenAuth={(mode) => handleOpenAuth(mode)}
-          onQuickDemo={() => {
-            if (typeof window !== "undefined") {
-              localStorage.setItem("gradeflow_current_user", JSON.stringify(defaultUser));
-            }
-            setUser(defaultUser);
-            loadAllData();
-          }}
         />
 
         {/* Student Authentication Modal */}

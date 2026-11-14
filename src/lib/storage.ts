@@ -33,6 +33,7 @@ export const DATA_CHANGE_EVENT = "gradeflow:data-change";
 
 export function notifyDataChange() {
   if (typeof window !== "undefined") {
+    pushUserDataToCloud().catch(() => {});
     window.dispatchEvent(new CustomEvent(DATA_CHANGE_EVENT));
   }
 }
@@ -95,6 +96,78 @@ function writeLocal<T>(key: string, data: T): void {
     localStorage.setItem(key, JSON.stringify(data));
   } catch (err) {
     console.error("Storage write error", err);
+  }
+}
+
+// ----------------------------------------------------
+// CROSS-DEVICE CLOUD SYNCHRONIZATION ENGINE
+// Synchronizes data across laptop, phone, and tablet!
+// ----------------------------------------------------
+export async function syncUserDataWithCloud(userId: string = getActiveUserId()): Promise<void> {
+  if (typeof window === "undefined" || !userId) return;
+
+  try {
+    const res = await fetch(`/api/data/sync?userId=${encodeURIComponent(userId)}`);
+    const json = await res.json();
+    if (res.ok && json.success && json.data) {
+      const data = json.data;
+      const subKey = getUserKey(STORAGE_KEYS.SUBJECTS, userId);
+      const gradesKey = getUserKey(STORAGE_KEYS.GRADES, userId);
+      const goalsKey = getUserKey(STORAGE_KEYS.GOALS, userId);
+      const schedKey = getUserKey(STORAGE_KEYS.SCHEDULE, userId);
+      const notifsKey = getUserKey(STORAGE_KEYS.NOTIFICATIONS, userId);
+
+      if (Array.isArray(data.subjects) && data.subjects.length > 0) {
+        writeLocal(subKey, data.subjects);
+      }
+      if (Array.isArray(data.grades)) {
+        writeLocal(gradesKey, data.grades);
+      }
+      if (Array.isArray(data.goals)) {
+        writeLocal(goalsKey, data.goals);
+      }
+      if (data.schedule) {
+        writeLocal(schedKey, data.schedule);
+      }
+      if (Array.isArray(data.notifications)) {
+        writeLocal(notifsKey, data.notifications);
+      }
+    }
+  } catch (err) {
+    console.warn("Cloud sync error:", err);
+  }
+}
+
+export async function pushUserDataToCloud(userId: string = getActiveUserId()): Promise<void> {
+  if (typeof window === "undefined" || !userId) return;
+
+  try {
+    const subKey = getUserKey(STORAGE_KEYS.SUBJECTS, userId);
+    const gradesKey = getUserKey(STORAGE_KEYS.GRADES, userId);
+    const goalsKey = getUserKey(STORAGE_KEYS.GOALS, userId);
+    const schedKey = getUserKey(STORAGE_KEYS.SCHEDULE, userId);
+    const notifsKey = getUserKey(STORAGE_KEYS.NOTIFICATIONS, userId);
+
+    const subjects = readLocal(subKey, defaultSubjects);
+    const grades = readLocal(gradesKey, defaultGrades);
+    const goals = readLocal(goalsKey, defaultGoals);
+    const schedule = readLocal(schedKey, defaultScheduleSettings);
+    const notifications = readLocal(notifsKey, defaultNotifications);
+
+    await fetch("/api/data/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        subjects,
+        grades,
+        goals,
+        schedule,
+        notifications,
+      }),
+    });
+  } catch (err) {
+    console.warn("Cloud push error:", err);
   }
 }
 

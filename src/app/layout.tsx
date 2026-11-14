@@ -9,12 +9,21 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://glen-und-during-bacterial.trycloudflare.com"),
   title: "GradeFlow — Intellektual Ta'lim Monitoringi & AI Mentor",
-  description: "Talabalar va o'quvchilar uchun zamonaviy akademik tahlil va AI mentor tizimi",
+  description: "Talabalar va o'quvchilar uchun zamonaviy akademik tahlil, GPA monitoringi va AI mentor tizimi",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icon.svg",
-    apple: "/icon.svg",
+    icon: [
+      { url: "/logo.jpg", type: "image/jpeg" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/logo.jpg",
+  },
+  openGraph: {
+    title: "GradeFlow — Intellektual Ta'lim Monitoringi & AI Mentor",
+    description: "Talabalar va o'quvchilar uchun zamonaviy akademik tahlil, GPA monitoringi va AI mentor tizimi",
+    images: [{ url: "/logo.jpg" }],
   },
   appleWebApp: {
     capable: true,

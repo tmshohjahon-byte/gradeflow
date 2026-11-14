@@ -25,14 +25,12 @@ type LandingPageProps = {
   lang: Language;
   onLanguageChange: (lang: Language) => void;
   onOpenAuth: (mode: "login" | "signup") => void;
-  onQuickDemo: () => void;
 };
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   lang,
   onLanguageChange,
   onOpenAuth,
-  onQuickDemo,
 }) => {
   const t = translations[lang] || translations.uz;
   const [langMenuOpen, setLangMenuOpen] = useState(false);
@@ -126,13 +124,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 rounded-xl overflow-hidden border border-indigo-500/40 shadow-lg shadow-indigo-500/25 shrink-0 bg-[#0D1322] p-0.5">
+              <img
+                src="/logo.jpg"
+                alt="GradeFlow Logo"
+                className="w-full h-full object-cover rounded-lg"
+              />
             </div>
             <div>
               <div className="flex items-center space-x-1.5">
-                <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-                  GradeFlow
+                <span className="font-extrabold text-lg tracking-tight text-white">
+                  Grade<span className="bg-gradient-to-r from-cyan-400 via-sky-400 to-fuchsia-400 bg-clip-text text-transparent">Flow</span>
                 </span>
                 <span className="px-1.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                   AI Mentor
@@ -198,7 +200,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </header>
 
       {/* Hero Section */}
-      <section className="relative z-10 pt-16 sm:pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
+      <section className="relative z-10 pt-12 sm:pt-20 pb-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
+        {/* Official 3D Brand Logo Showcase */}
+        <div className="flex justify-center mb-6 sm:mb-8">
+          <div className="relative group">
+            <div className="absolute -inset-1.5 bg-gradient-to-r from-cyan-500 via-indigo-500 to-fuchsia-500 rounded-3xl blur-xl opacity-50 group-hover:opacity-85 transition duration-500 animate-pulse" />
+            <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-3xl overflow-hidden border-2 border-indigo-400/40 shadow-2xl bg-[#090D16] p-1">
+              <img
+                src="/logo.jpg"
+                alt="GradeFlow 3D Official Artwork"
+                className="w-full h-full object-cover rounded-2xl"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Release Pill */}
         <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/25 text-indigo-300 text-xs font-semibold mb-6 shadow-sm">
           <Sparkles className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
@@ -262,23 +278,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-200 hover:text-white font-bold text-sm sm:text-base shadow-lg transition-colors flex items-center justify-center space-x-2"
           >
             <span>{lang === "uz" ? "Tizimga Kirish" : lang === "ru" ? "Войти в систему" : "Log In to Account"}</span>
-          </button>
-        </div>
-
-        {/* Shohjahon Quick Demo / Founder Badge */}
-        <div className="mt-6">
-          <button
-            onClick={onQuickDemo}
-            className="inline-flex items-center space-x-2 text-xs font-semibold text-slate-400 hover:text-indigo-400 transition-colors py-1 px-3 rounded-lg hover:bg-slate-900/60"
-          >
-            <Play className="w-3 h-3 text-indigo-400" />
-            <span>
-              {lang === "uz"
-                ? "Shohjahon Namunasi (Tezkor Demo ko'rish)"
-                : lang === "ru"
-                ? "Демо-просмотр профиля Шохжахона"
-                : "Explore Shohjahon Demo Showcase"}
-            </span>
           </button>
         </div>
 
