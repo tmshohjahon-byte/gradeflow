@@ -109,7 +109,18 @@ export const DailyGradeCheckIn: React.FC<DailyGradeCheckInProps> = ({
   const isRestDay = schedule.rest_days.includes(activeDay);
   const currentSubjectIds = schedule.timetable[activeDay] || [];
   const currentScheduledSubjects = currentSubjectIds
-    .map((id) => subjects.find((s) => s.id === id))
+    .map((id) => {
+      return (
+        subjects.find((s) => s.id === id) ||
+        subjects.find((s) => s.id.toLowerCase() === id.toLowerCase()) ||
+        subjects.find((s) => s.code && s.code.toLowerCase() === id.toLowerCase()) ||
+        subjects.find(
+          (s) =>
+            id.toLowerCase().includes(s.name.toLowerCase()) ||
+            s.name.toLowerCase().includes(id.toLowerCase())
+        )
+      );
+    })
     .filter(Boolean) as Subject[];
 
   // Track skipped subjects in this session

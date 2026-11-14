@@ -65,10 +65,10 @@ export default function Home() {
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
 
   // Load all data
-  const loadAllData = useCallback(async () => {
+  const loadAllData = useCallback(async (shouldSyncCloud: boolean = false) => {
     try {
       const u = await getUserProfile();
-      if (u?.id) {
+      if (shouldSyncCloud && u?.id) {
         await syncUserDataWithCloud(u.id);
       }
 
@@ -98,11 +98,11 @@ export default function Home() {
   useEffect(() => {
     setIsMounted(true);
     setLang(getStoredLanguage());
-    loadAllData();
+    loadAllData(true);
 
-    // Listen to changes
+    // Listen to changes without triggering cloud race conditions
     const handleDataChange = () => {
-      loadAllData();
+      loadAllData(false);
     };
 
     window.addEventListener(DATA_CHANGE_EVENT, handleDataChange);

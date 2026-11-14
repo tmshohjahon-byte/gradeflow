@@ -117,18 +117,50 @@ export async function syncUserDataWithCloud(userId: string = getActiveUserId()):
       const schedKey = getUserKey(STORAGE_KEYS.SCHEDULE, userId);
       const notifsKey = getUserKey(STORAGE_KEYS.NOTIFICATIONS, userId);
 
+      // Local vs Remote conflict resolution
       if (Array.isArray(data.subjects) && data.subjects.length > 0) {
-        writeLocal(subKey, data.subjects);
+        const localSubs = readLocal<Subject[]>(subKey, []);
+        if (localSubs.length <= data.subjects.length) {
+          writeLocal(subKey, data.subjects);
+        }
       }
       if (Array.isArray(data.grades)) {
-        writeLocal(gradesKey, data.grades);
+        const localGrades = readLocal<Grade[]>(gradesKey, []);
+        if (data.grades.length >= localGrades.length) {
+          writeLocal(gradesKey, data.grades);
+        }
       }
       if (Array.isArray(data.goals)) {
         writeLocal(goalsKey, data.goals);
       }
+      
+      // CRITICAL TIMETABLE SAFETY & AUTO-PRESERVATION:
+      // Never allow an empty or stale cloud schedule to overwrite local work!
       if (data.schedule) {
-        writeLocal(schedKey, data.schedule);
+        const localSched = readLocal<ScheduleSettings>(schedKey, defaultScheduleSettings);
+        const countEntries = (s?: ScheduleSettings) => {
+          if (!s?.timetable) return 0;
+          return Object.values(s.timetable).reduce(
+            (acc, arr) => acc + (Array.isArray(arr) ? arr.length : 0),
+            0
+          );
+        };
+
+        const localCount = countEntries(localSched);
+        const remoteCount = countEntries(data.schedule);
+        const localTime = new Date(localSched.updated_at || 0).getTime();
+        const remoteTime = new Date(data.schedule.updated_at || 0).getTime();
+
+        if (localCount > 0 && remoteCount < localCount) {
+          // Local timetable is richer! Do NOT overwrite; instead, push local to cloud!
+          pushUserDataToCloud(userId).catch(() => {});
+        } else if (remoteTime > localTime && remoteCount >= localCount) {
+          writeLocal(schedKey, data.schedule);
+        } else if (localCount === 0 && remoteCount > 0) {
+          writeLocal(schedKey, data.schedule);
+        }
       }
+
       if (Array.isArray(data.notifications)) {
         writeLocal(notifsKey, data.notifications);
       }
@@ -762,8 +794,29 @@ export async function saveScheduleSettings(settings: ScheduleSettings): Promise<
   const schedKey = getUserKey(STORAGE_KEYS.SCHEDULE, userId);
   const updated = { ...settings, updated_at: new Date().toISOString() };
   writeLocal(schedKey, updated);
+
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem("gradeflow_schedule_backup", JSON.stringify(updated));
+      localStorage.setItem(`gradeflow_schedule_backup_${userId}`, JSON.stringify(updated));
+    } catch {}
+  }
+
   notifyDataChange();
   return updated;
+}
+
+export function getScheduleBackup(): ScheduleSettings | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const userId = getActiveUserId();
+    const raw =
+      localStorage.getItem(`gradeflow_schedule_backup_${userId}`) ||
+      localStorage.getItem("gradeflow_schedule_backup");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
 // ----------------------------------------------------

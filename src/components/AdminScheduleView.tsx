@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Subject, ScheduleSettings, DayOfWeek, Language } from "@/types/database";
 import { translations } from "@/lib/i18n";
-import { saveScheduleSettings } from "@/lib/storage";
+import { saveScheduleSettings, getScheduleBackup } from "@/lib/storage";
 
 type AdminScheduleViewProps = {
   schedule: ScheduleSettings;
@@ -39,6 +39,28 @@ export const AdminScheduleView: React.FC<AdminScheduleViewProps> = ({
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>("monday");
   const [subjectToAdd, setSubjectToAdd] = useState<string>(subjects[0]?.id || "");
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [hasBackup, setHasBackup] = useState(false);
+
+  // Sync with incoming schedule and detect local backups
+  React.useEffect(() => {
+    const count = (s?: ScheduleSettings) =>
+      Object.values(s?.timetable || {}).reduce((acc, l) => acc + (l?.length || 0), 0);
+
+    const backup = getScheduleBackup();
+    if (backup && count(backup) > 0) {
+      setHasBackup(true);
+    }
+
+    if (schedule) {
+      setCurrentSchedule((prev) => {
+        // If current state has timetable items, keep them; otherwise take incoming or backup
+        if (count(prev) > 0) return prev;
+        if (count(schedule) > 0) return schedule;
+        if (backup && count(backup) > 0) return backup;
+        return schedule;
+      });
+    }
+  }, [schedule]);
 
   const daysInfo: { id: DayOfWeek; nameUz: string; nameRu: string; nameEn: string; short: string }[] = [
     { id: "monday", nameUz: "Dushanba", nameRu: "Понедельник", nameEn: "Monday", short: "Dush" },
@@ -56,9 +78,21 @@ export const AdminScheduleView: React.FC<AdminScheduleViewProps> = ({
     return lang === "ru" ? d.nameRu : lang === "en" ? d.nameEn : d.nameUz;
   };
 
-  const getSubjectById = (id: string) => subjects.find((s) => s.id === id);
+  const getSubjectById = (id: string) => {
+    if (!id) return undefined;
+    return (
+      subjects.find((s) => s.id === id) ||
+      subjects.find((s) => s.id.toLowerCase() === id.toLowerCase()) ||
+      subjects.find((s) => s.code && s.code.toLowerCase() === id.toLowerCase()) ||
+      subjects.find(
+        (s) =>
+          id.toLowerCase().includes(s.name.toLowerCase()) ||
+          s.name.toLowerCase().includes(id.toLowerCase())
+      )
+    );
+  };
 
-  // Toggle Rest Day
+  // Toggle Rest Day with Immediate Auto-save
   const handleToggleRestDay = (day: DayOfWeek) => {
     const isRest = currentSchedule.rest_days.includes(day);
     let updatedRestDays: DayOfWeek[];
@@ -67,13 +101,16 @@ export const AdminScheduleView: React.FC<AdminScheduleViewProps> = ({
     } else {
       updatedRestDays = [...currentSchedule.rest_days, day];
     }
-    setCurrentSchedule((prev) => ({
-      ...prev,
+    const next: ScheduleSettings = {
+      ...currentSchedule,
       rest_days: updatedRestDays,
-    }));
+      updated_at: new Date().toISOString(),
+    };
+    setCurrentSchedule(next);
+    saveScheduleSettings(next);
   };
 
-  // Add Subject to Selected Day
+  // Add Subject to Selected Day with Immediate Auto-save
   const handleAddSubjectToDay = (day: DayOfWeek) => {
     if (!subjectToAdd) return;
     const currentList = currentSchedule.timetable[day] || [];
@@ -81,13 +118,16 @@ export const AdminScheduleView: React.FC<AdminScheduleViewProps> = ({
       ...currentSchedule.timetable,
       [day]: [...currentList, subjectToAdd],
     };
-    setCurrentSchedule((prev) => ({
-      ...prev,
+    const next: ScheduleSettings = {
+      ...currentSchedule,
       timetable: updatedTimetable,
-    }));
+      updated_at: new Date().toISOString(),
+    };
+    setCurrentSchedule(next);
+    saveScheduleSettings(next);
   };
 
-  // Remove Subject from Day
+  // Remove Subject from Day with Immediate Auto-save
   const handleRemoveSubjectFromDay = (day: DayOfWeek, index: number) => {
     const currentList = currentSchedule.timetable[day] || [];
     const updatedList = currentList.filter((_, idx) => idx !== index);
@@ -95,23 +135,49 @@ export const AdminScheduleView: React.FC<AdminScheduleViewProps> = ({
       ...currentSchedule.timetable,
       [day]: updatedList,
     };
-    setCurrentSchedule((prev) => ({
-      ...prev,
+    const next: ScheduleSettings = {
+      ...currentSchedule,
       timetable: updatedTimetable,
-    }));
+      updated_at: new Date().toISOString(),
+    };
+    setCurrentSchedule(next);
+    saveScheduleSettings(next);
   };
 
-  // Save all schedule changes
+  // Save all schedule changes explicitly
   const handleSave = async () => {
-    await saveScheduleSettings(currentSchedule);
+    const updated = {
+      ...currentSchedule,
+      updated_at: new Date().toISOString(),
+    };
+    await saveScheduleSettings(updated);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2500);
     onRefreshData();
   };
 
+  // Restore timetable from local backup
+  const handleRestoreBackup = () => {
+    const backup = getScheduleBackup();
+    if (backup) {
+      setCurrentSchedule(backup);
+      saveScheduleSettings(backup);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2500);
+      onRefreshData();
+    }
+  };
+
   // Preset Template Loader (Standard Shohjahon Schedule for 13 subjects)
   const handleLoadStandardTemplate = () => {
-    const findSub = (query: string) => subjects.find((s) => s.name.toLowerCase().includes(query))?.id || "";
+    const findSub = (query: string) => {
+      const q = query.toLowerCase().trim();
+      const match =
+        subjects.find((s) => s.name.toLowerCase().trim() === q) ||
+        subjects.find((s) => s.name.toLowerCase().includes(q)) ||
+        subjects.find((s) => s.code && s.code.toLowerCase().includes(q));
+      return match?.id || "";
+    };
 
     const eng = findSub("ingliz");
     const math = findSub("matematika");
@@ -138,8 +204,13 @@ export const AdminScheduleView: React.FC<AdminScheduleViewProps> = ({
         saturday: [arab, hist, mathTask, engTask].filter(Boolean),
         sunday: [],
       },
+      updated_at: new Date().toISOString(),
     };
     setCurrentSchedule(template);
+    saveScheduleSettings(template);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2500);
+    onRefreshData();
   };
 
   return (
@@ -236,6 +307,16 @@ export const AdminScheduleView: React.FC<AdminScheduleViewProps> = ({
           </div>
 
           <div className="flex items-center space-x-2">
+            {hasBackup && (
+              <button
+                onClick={handleRestoreBackup}
+                className="text-xs px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-colors flex items-center space-x-1"
+                title="Lokal zaxiradan dars jadvalini qayta tiklash"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Zaxiradan tiklash</span>
+              </button>
+            )}
             <button
               onClick={handleLoadStandardTemplate}
               className="text-xs px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white border border-slate-700 transition-colors flex items-center space-x-1"
@@ -325,7 +406,6 @@ export const AdminScheduleView: React.FC<AdminScheduleViewProps> = ({
           <div className="space-y-2.5">
             {(currentSchedule.timetable[selectedDay] || []).map((subId, idx) => {
               const sub = getSubjectById(subId);
-              if (!sub) return null;
 
               return (
                 <div
@@ -338,14 +418,14 @@ export const AdminScheduleView: React.FC<AdminScheduleViewProps> = ({
                     </span>
                     <span
                       className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: sub.color }}
+                      style={{ backgroundColor: sub?.color || "#6366F1" }}
                     />
                     <div>
                       <h4 className="text-sm font-bold text-white">
-                        {sub.name}
+                        {sub?.name || `Fan (${subId})`}
                       </h4>
                       <div className="text-[11px] text-slate-400">
-                        {sub.code || "Fan"} • {sub.teacher_name || "O'qituvchi"}
+                        {sub?.code || "Dars"} • {sub?.teacher_name || "O'qituvchi"}
                       </div>
                     </div>
                   </div>
