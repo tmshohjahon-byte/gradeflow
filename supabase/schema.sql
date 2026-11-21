@@ -1,10 +1,19 @@
 -- ==============================================================================
 -- GRADEFLOW ENTERPRISE DATABASE SCHEMA (PostgreSQL / Supabase)
--- Universal TEXT keys for seamless custom OTP + multi-device persistence
+-- Fresh migration: Drop old empty conflict tables & establish GradeFlow schema
 -- ==============================================================================
 
+-- 0. CLEAN OLD CONFLICTING EMPTY TABLES
+DROP TABLE IF EXISTS public.timetable CASCADE;
+DROP TABLE IF EXISTS public.schedule_settings CASCADE;
+DROP TABLE IF EXISTS public.notifications CASCADE;
+DROP TABLE IF EXISTS public.academic_goals CASCADE;
+DROP TABLE IF EXISTS public.grades CASCADE;
+DROP TABLE IF EXISTS public.subjects CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
 -- 1. PROFILES TABLE
-CREATE TABLE IF NOT EXISTS public.profiles (
+CREATE TABLE public.profiles (
   id TEXT PRIMARY KEY,
   email TEXT NOT NULL,
   full_name TEXT NOT NULL DEFAULT 'Shohjahon',
@@ -16,7 +25,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 );
 
 -- 2. SUBJECTS TABLE
-CREATE TABLE IF NOT EXISTS public.subjects (
+CREATE TABLE public.subjects (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
@@ -28,7 +37,7 @@ CREATE TABLE IF NOT EXISTS public.subjects (
 );
 
 -- 3. GRADES TABLE
-CREATE TABLE IF NOT EXISTS public.grades (
+CREATE TABLE public.grades (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   subject_id TEXT NOT NULL REFERENCES public.subjects(id) ON DELETE CASCADE,
@@ -40,7 +49,7 @@ CREATE TABLE IF NOT EXISTS public.grades (
 );
 
 -- 4. ACADEMIC GOALS TABLE
-CREATE TABLE IF NOT EXISTS public.academic_goals (
+CREATE TABLE public.academic_goals (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   subject_id TEXT NOT NULL REFERENCES public.subjects(id) ON DELETE CASCADE,
@@ -53,7 +62,7 @@ CREATE TABLE IF NOT EXISTS public.academic_goals (
 );
 
 -- 5. NOTIFICATIONS TABLE
-CREATE TABLE IF NOT EXISTS public.notifications (
+CREATE TABLE public.notifications (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
@@ -66,7 +75,7 @@ CREATE TABLE IF NOT EXISTS public.notifications (
 );
 
 -- 6. TIMETABLE & REST DAYS
-CREATE TABLE IF NOT EXISTS public.timetable (
+CREATE TABLE public.timetable (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   day TEXT NOT NULL CHECK (day IN ('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday')),
@@ -75,7 +84,7 @@ CREATE TABLE IF NOT EXISTS public.timetable (
   UNIQUE(user_id, day)
 );
 
-CREATE TABLE IF NOT EXISTS public.schedule_settings (
+CREATE TABLE public.schedule_settings (
   user_id TEXT PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
   rest_days JSONB DEFAULT '["sunday"]'::jsonb,
   timetable JSONB DEFAULT '{}'::jsonb,
@@ -85,14 +94,14 @@ CREATE TABLE IF NOT EXISTS public.schedule_settings (
 -- ==============================================================================
 -- INDEXES FOR MAXIMUM QUERY PERFORMANCE
 -- ==============================================================================
-CREATE INDEX IF NOT EXISTS idx_subjects_user ON public.subjects(user_id);
-CREATE INDEX IF NOT EXISTS idx_grades_user_subject ON public.grades(user_id, subject_id);
-CREATE INDEX IF NOT EXISTS idx_grades_date ON public.grades(date DESC);
-CREATE INDEX IF NOT EXISTS idx_academic_goals_user ON public.academic_goals(user_id);
-CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON public.notifications(user_id, is_read, created_at DESC);
+CREATE INDEX idx_subjects_user ON public.subjects(user_id);
+CREATE INDEX idx_grades_user_subject ON public.grades(user_id, subject_id);
+CREATE INDEX idx_grades_date ON public.grades(date DESC);
+CREATE INDEX idx_academic_goals_user ON public.academic_goals(user_id);
+CREATE INDEX idx_notifications_user_read ON public.notifications(user_id, is_read, created_at DESC);
 
 -- ==============================================================================
--- PRE-SEED PRIMARY USERS (So relations immediately work)
+-- PRE-SEED PRIMARY USERS
 -- ==============================================================================
 INSERT INTO public.profiles (id, email, full_name, school_name, grade_level)
 VALUES 
@@ -114,23 +123,13 @@ ALTER TABLE public.timetable ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.schedule_settings ENABLE ROW LEVEL SECURITY;
 
 -- Allow application client with anon API key to query & mutate data
-DROP POLICY IF EXISTS "Public access profiles" ON public.profiles;
 CREATE POLICY "Public access profiles" ON public.profiles FOR ALL USING (true) WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Public access subjects" ON public.subjects;
 CREATE POLICY "Public access subjects" ON public.subjects FOR ALL USING (true) WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Public access grades" ON public.grades;
 CREATE POLICY "Public access grades" ON public.grades FOR ALL USING (true) WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Public access goals" ON public.academic_goals;
 CREATE POLICY "Public access goals" ON public.academic_goals FOR ALL USING (true) WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Public access notifications" ON public.notifications;
 CREATE POLICY "Public access notifications" ON public.notifications FOR ALL USING (true) WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Public access timetable" ON public.timetable;
 CREATE POLICY "Public access timetable" ON public.timetable FOR ALL USING (true) WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Public access schedule_settings" ON public.schedule_settings;
 CREATE POLICY "Public access schedule_settings" ON public.schedule_settings FOR ALL USING (true) WITH CHECK (true);
+
+-- Refresh schema cache
+NOTIFY pgrst, 'reload schema';
