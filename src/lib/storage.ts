@@ -222,7 +222,47 @@ export function setStoredLanguage(lang: Language): void {
 // ----------------------------------------------------
 // USER PROFILE
 // ----------------------------------------------------
+// ----------------------------------------------------
+// SYNCHRONOUS INSTANT LOCAL GETTERS (0ms SWR Fast-Path)
+// ----------------------------------------------------
+export function getLocalUserProfile(): UserProfile | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const active = localStorage.getItem("gradeflow_current_user");
+    if (active) return JSON.parse(active);
+  } catch {}
+  return null;
+}
+
+export function getLocalSubjects(userId: string = getActiveUserId()): Subject[] {
+  const subKey = getUserKey(STORAGE_KEYS.SUBJECTS, userId);
+  return readLocal<Subject[]>(subKey, defaultSubjects);
+}
+
+export function getLocalGrades(userId: string = getActiveUserId()): Grade[] {
+  const gradesKey = getUserKey(STORAGE_KEYS.GRADES, userId);
+  return readLocal<Grade[]>(gradesKey, defaultGrades);
+}
+
+export function getLocalGoals(userId: string = getActiveUserId()): AcademicGoal[] {
+  const goalsKey = getUserKey(STORAGE_KEYS.GOALS, userId);
+  return readLocal<AcademicGoal[]>(goalsKey, defaultGoals);
+}
+
+export function getLocalNotifications(userId: string = getActiveUserId()): Notification[] {
+  const notifsKey = getUserKey(STORAGE_KEYS.NOTIFICATIONS, userId);
+  return readLocal<Notification[]>(notifsKey, defaultNotifications);
+}
+
+export function getLocalScheduleSettings(userId: string = getActiveUserId()): ScheduleSettings {
+  const schedKey = getUserKey(STORAGE_KEYS.SCHEDULE, userId);
+  return readLocal<ScheduleSettings>(schedKey, defaultScheduleSettings);
+}
+
 export async function getUserProfile(): Promise<UserProfile | null> {
+  const local = getLocalUserProfile();
+  if (local) return local;
+
   const supabase = getSupabase();
   if (supabase) {
     try {
@@ -247,13 +287,6 @@ export async function getUserProfile(): Promise<UserProfile | null> {
     } catch (e) {
       console.warn("Supabase profile fetch error, fallback to local:", e);
     }
-  }
-
-  if (typeof window !== "undefined") {
-    try {
-      const active = localStorage.getItem("gradeflow_current_user");
-      if (active) return JSON.parse(active);
-    } catch {}
   }
 
   return null;

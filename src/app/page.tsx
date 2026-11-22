@@ -36,6 +36,12 @@ import {
   deleteGrade,
   DATA_CHANGE_EVENT,
   syncUserDataWithCloud,
+  getLocalUserProfile,
+  getLocalSubjects,
+  getLocalGrades,
+  getLocalGoals,
+  getLocalNotifications,
+  getLocalScheduleSettings,
 } from "@/lib/storage";
 import { defaultScheduleSettings, defaultUser } from "@/lib/sampleData";
 import { calculatePerformanceMetrics } from "@/lib/analytics";
@@ -97,7 +103,24 @@ export default function Home() {
 
   useEffect(() => {
     setIsMounted(true);
-    setLang(getStoredLanguage());
+    const storedLang = getStoredLanguage();
+    setLang(storedLang);
+
+    // STEP 1: INSTANT 0ms HYDRATION (Eliminates spinner wait)
+    const cachedUser = getLocalUserProfile();
+    if (cachedUser) {
+      setUser(cachedUser);
+      setSubjects(getLocalSubjects(cachedUser.id));
+      setGrades(getLocalGrades(cachedUser.id));
+      setGoals(getLocalGoals(cachedUser.id));
+      setNotifications(getLocalNotifications(cachedUser.id));
+      setSchedule(getLocalScheduleSettings(cachedUser.id));
+      setIsLoading(false);
+    } else {
+      setIsLoading(false);
+    }
+
+    // STEP 2: SILENT BACKGROUND CLOUD REVALIDATION (Non-blocking)
     loadAllData(true);
 
     // Listen to changes without triggering cloud race conditions

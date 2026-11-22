@@ -9,7 +9,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://glen-und-during-bacterial.trycloudflare.com"),
+  metadataBase: new URL("https://gradeflow-jade.vercel.app"),
   title: "GradeFlow — Intellektual Ta'lim Monitoringi & AI Mentor",
   description: "Talabalar va o'quvchilar uchun zamonaviy akademik tahlil, GPA monitoringi va AI mentor tizimi",
   manifest: "/manifest.json",
