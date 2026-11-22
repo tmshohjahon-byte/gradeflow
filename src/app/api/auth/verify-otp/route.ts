@@ -6,6 +6,11 @@ import {
 } from "@/lib/serverOtp";
 import { isValidEmail, isValidOtpFormat } from "@/lib/security/validator";
 import { constantTimeCompare } from "@/lib/security/crypto";
+import {
+  getClientIp,
+  checkVerifyOtpRateLimit,
+} from "@/lib/security/rateLimiter";
+import { signSessionToken, SESSION_COOKIE_OPTIONS } from "@/lib/security/jwt";
 import { saveUser, findUserByEmail } from "@/lib/serverUserStore";
 import { UserProfile } from "@/types/database";
 
@@ -24,6 +29,21 @@ export async function POST(req: NextRequest) {
     }
 
     const { email, code } = body;
+    const clientIp = getClientIp(req);
+
+    // 0. IP Rate Limiting (Prevents automated bot guessing across addresses)
+    const ipLimit = checkVerifyOtpRateLimit(clientIp);
+    if (!ipLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          rateLimited: true,
+          retryAfterSeconds: ipLimit.retryAfterSeconds,
+          message: ipLimit.message,
+        },
+        { status: 429 }
+      );
+    }
 
     // 1. Strict Format Validation
     if (!isValidEmail(email)) {
@@ -140,11 +160,27 @@ export async function POST(req: NextRequest) {
     // 7. Atomic Invalidation: Purge verified OTP from memory immediately
     deletePendingOtp(cleanEmail);
 
-    return NextResponse.json({
+    // 8. Create cryptographically signed enterprise session token (JWT)
+    const sessionToken = signSessionToken({
+      userId: userProfile.id,
+      email: userProfile.email,
+      fullName: userProfile.full_name,
+    });
+
+    const response = NextResponse.json({
       success: true,
       user: userProfile,
       message: "Gmail muvaffaqiyatli tasdiqlandi!",
     });
+
+    // 9. Set HttpOnly; Secure; SameSite=Lax session cookie
+    response.cookies.set(
+      SESSION_COOKIE_OPTIONS.name,
+      sessionToken,
+      SESSION_COOKIE_OPTIONS
+    );
+
+    return response;
   } catch (error: any) {
     console.error("verify-otp server error:", error);
     return NextResponse.json(

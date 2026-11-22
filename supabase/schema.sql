@@ -112,7 +112,7 @@ ON CONFLICT (id) DO UPDATE SET
   school_name = EXCLUDED.school_name;
 
 -- ==============================================================================
--- ROW LEVEL SECURITY (RLS) POLICIES
+-- ROW LEVEL SECURITY (RLS) POLICIES (APPSEC HARDENED)
 -- ==============================================================================
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subjects ENABLE ROW LEVEL SECURITY;
@@ -122,14 +122,25 @@ ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.timetable ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.schedule_settings ENABLE ROW LEVEL SECURITY;
 
--- Allow application client with anon API key to query & mutate data
-CREATE POLICY "Public access profiles" ON public.profiles FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Public access subjects" ON public.subjects FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Public access grades" ON public.grades FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Public access goals" ON public.academic_goals FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Public access notifications" ON public.notifications FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Public access timetable" ON public.timetable FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Public access schedule_settings" ON public.schedule_settings FOR ALL USING (true) WITH CHECK (true);
+-- Drop legacy permissive policies
+DROP POLICY IF EXISTS "Public access profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Public access subjects" ON public.subjects;
+DROP POLICY IF EXISTS "Public access grades" ON public.grades;
+DROP POLICY IF EXISTS "Public access goals" ON public.academic_goals;
+DROP POLICY IF EXISTS "Public access notifications" ON public.notifications;
+DROP POLICY IF EXISTS "Public access timetable" ON public.timetable;
+DROP POLICY IF EXISTS "Public access schedule_settings" ON public.schedule_settings;
+
+-- Explicitly deny unauthenticated / anon direct mutations and reads.
+-- All database interactions are strictly mediated through authenticated GradeFlow
+-- server APIs using SUPABASE_SERVICE_ROLE_KEY which bypasses RLS safely.
+CREATE POLICY "Deny anon access profiles" ON public.profiles FOR ALL TO anon USING (false) WITH CHECK (false);
+CREATE POLICY "Deny anon access subjects" ON public.subjects FOR ALL TO anon USING (false) WITH CHECK (false);
+CREATE POLICY "Deny anon access grades" ON public.grades FOR ALL TO anon USING (false) WITH CHECK (false);
+CREATE POLICY "Deny anon access goals" ON public.academic_goals FOR ALL TO anon USING (false) WITH CHECK (false);
+CREATE POLICY "Deny anon access notifications" ON public.notifications FOR ALL TO anon USING (false) WITH CHECK (false);
+CREATE POLICY "Deny anon access timetable" ON public.timetable FOR ALL TO anon USING (false) WITH CHECK (false);
+CREATE POLICY "Deny anon access schedule_settings" ON public.schedule_settings FOR ALL TO anon USING (false);
 
 -- Refresh schema cache
 NOTIFY pgrst, 'reload schema';

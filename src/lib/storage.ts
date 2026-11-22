@@ -107,7 +107,14 @@ export async function syncUserDataWithCloud(userId: string = getActiveUserId()):
   if (typeof window === "undefined" || !userId) return;
 
   try {
-    const res = await fetch(`/api/data/sync?userId=${encodeURIComponent(userId)}`);
+    const res = await fetch("/api/data/sync", {
+      method: "GET",
+      credentials: "include",
+    });
+    if (res.status === 401) {
+      // Unauthenticated session - local data stays completely safe locally
+      return;
+    }
     const json = await res.json();
     if (res.ok && json.success && json.data) {
       const data = json.data;
@@ -186,9 +193,10 @@ export async function pushUserDataToCloud(userId: string = getActiveUserId()): P
     const schedule = readLocal(schedKey, defaultScheduleSettings);
     const notifications = readLocal(notifsKey, defaultNotifications);
 
-    await fetch("/api/data/sync", {
+    const res = await fetch("/api/data/sync", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({
         userId,
         subjects,
@@ -198,6 +206,10 @@ export async function pushUserDataToCloud(userId: string = getActiveUserId()): P
         notifications,
       }),
     });
+    if (res.status === 401) {
+      // Unauthenticated session - push skipped safely
+      return;
+    }
   } catch (err) {
     console.warn("Cloud push error:", err);
   }

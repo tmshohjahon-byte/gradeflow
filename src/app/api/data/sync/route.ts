@@ -1,20 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserCloudData, saveUserCloudData } from "@/lib/serverDataStore";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
+import { verifySessionToken, SESSION_COOKIE_OPTIONS } from "@/lib/security/jwt";
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
+    // 1. Authenticate session from HttpOnly signed JWT cookie (IDOR Shield)
+    const sessionCookie = req.cookies.get(SESSION_COOKIE_OPTIONS.name)?.value;
+    const session = verifySessionToken(sessionCookie);
 
-    if (!userId) {
+    if (!session || !session.userId) {
       return NextResponse.json(
-        { success: false, message: "userId talab qilinadi." },
-        { status: 400 }
+        {
+          success: false,
+          message: "Avtorizatsiyadan o'tilmagan. Iltimos, hisobingizga kiring.",
+        },
+        { status: 401 }
       );
     }
 
-    const supabase = getSupabase();
+    const userId = session.userId;
+
+    // 2. Fetch using privileged Supabase Admin client (RLS-secure)
+    const supabase = getSupabaseAdmin();
     if (supabase) {
       try {
         const [subsRes, gradesRes, goalsRes, notifsRes, schedRes] = await Promise.all([
@@ -51,9 +59,13 @@ export async function GET(req: NextRequest) {
     const data = getUserCloudData(userId);
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
-    console.error("GET /api/data/sync error:", error);
+    // Sanitize error: never leak raw DB/driver errors or stack traces to client
+    console.error("GET /api/data/sync server error:", error);
     return NextResponse.json(
-      { success: false, message: error.message || "Server xatoligi." },
+      {
+        success: false,
+        message: "Serverda ma'lumotlarni yuklashda xatolik yuz berdi.",
+      },
       { status: 500 }
     );
   }
@@ -61,17 +73,36 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { userId, subjects, grades, goals, schedule, notifications } = body;
+    // 1. Authenticate session from HttpOnly signed JWT cookie (IDOR Shield)
+    const sessionCookie = req.cookies.get(SESSION_COOKIE_OPTIONS.name)?.value;
+    const session = verifySessionToken(sessionCookie);
 
-    if (!userId) {
+    if (!session || !session.userId) {
       return NextResponse.json(
-        { success: false, message: "userId talab qilinadi." },
+        {
+          success: false,
+          message: "Avtorizatsiyadan o'tilmagan. Iltimos, hisobingizga kiring.",
+        },
+        { status: 401 }
+      );
+    }
+
+    // Always enforce the authenticated session's user identity
+    const userId = session.userId;
+
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, message: "Noto'g'ri so'rov formati (Invalid JSON)." },
         { status: 400 }
       );
     }
 
-    // 1. Save to server store
+    const { subjects, grades, goals, schedule, notifications } = body;
+
+    // 2. Save to persistent server store
     const updated = saveUserCloudData(userId, {
       subjects,
       grades,
@@ -80,8 +111,8 @@ export async function POST(req: NextRequest) {
       notifications,
     });
 
-    // 2. Persist to Supabase in parallel
-    const supabase = getSupabase();
+    // 3. Persist to Supabase in parallel using privileged Admin client
+    const supabase = getSupabaseAdmin();
     if (supabase) {
       try {
         if (Array.isArray(subjects) && subjects.length > 0) {
@@ -128,9 +159,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
-    console.error("POST /api/data/sync error:", error);
+    // Sanitize error: never leak raw DB/driver errors or stack traces to client
+    console.error("POST /api/data/sync server error:", error);
     return NextResponse.json(
-      { success: false, message: error.message || "Server xatoligi." },
+      {
+        success: false,
+        message: "Serverda ma'lumotlarni saqlashda xatolik yuz berdi.",
+      },
       { status: 500 }
     );
   }

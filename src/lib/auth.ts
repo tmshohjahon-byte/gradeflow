@@ -195,6 +195,7 @@ export async function logInStudent({
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({
         email: cleanEmail,
         password,
@@ -210,6 +211,11 @@ export async function logInStudent({
         success: true,
         user: data.user,
         message: data.message || "Xush kelibsiz!",
+      };
+    } else if (data.message && (res.status === 401 || res.status === 429)) {
+      return {
+        success: false,
+        message: data.message,
       };
     }
   } catch (apiErr) {
@@ -271,6 +277,17 @@ export async function logInStudent({
 }
 
 export async function logOutStudent(): Promise<void> {
+  // 1. Clear server-side HttpOnly session cookie
+  try {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch (err) {
+    console.warn("Server logout API notice:", err);
+  }
+
+  // 2. Clear Supabase auth if connected
   const supabase = getSupabase();
   if (supabase) {
     try {
@@ -349,6 +366,7 @@ export async function verifyEmailOtp({
     const res = await fetch("/api/auth/verify-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({
         email: cleanEmail,
         code: cleanCode,

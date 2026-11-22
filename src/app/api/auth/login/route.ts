@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateUser } from "@/lib/serverUserStore";
 import { isValidEmail } from "@/lib/security/validator";
-import { getClientIp } from "@/lib/security/rateLimiter";
+import {
+  getClientIp,
+  checkLoginRateLimit,
+  recordFailedLogin,
+  resetLoginRateLimit,
+} from "@/lib/security/rateLimiter";
+import { signSessionToken, SESSION_COOKIE_OPTIONS } from "@/lib/security/jwt";
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,6 +22,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { email, password } = body;
+    const clientIp = getClientIp(req);
 
     if (!email || !password) {
       return NextResponse.json(
@@ -33,24 +40,66 @@ export async function POST(req: NextRequest) {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // Authenticate against persistent server user store
-    const authResult = authenticateUser(cleanEmail, password);
-
-    if (!authResult.success || !authResult.user) {
+    // 1. Sliding Window Brute-Force Rate Limiting (IP & Email lockout)
+    const rateLimit = checkLoginRateLimit(clientIp, cleanEmail);
+    if (!rateLimit.allowed) {
       return NextResponse.json(
         {
           success: false,
-          message: authResult.message || "Email yoki parol noto'g'ri kiritildi.",
+          rateLimited: true,
+          retryAfterSeconds: rateLimit.retryAfterSeconds,
+          message: rateLimit.message,
+        },
+        { status: 429 }
+      );
+    }
+
+    // 2. Authenticate against persistent server user store
+    const authResult = authenticateUser(cleanEmail, password);
+
+    if (!authResult.success || !authResult.user) {
+      const failedCount = recordFailedLogin(clientIp, cleanEmail);
+      const remaining = Math.max(0, 5 - failedCount);
+
+      const message =
+        remaining > 0
+          ? `Email yoki parol noto'g'ri kiritildi. Qolgan urinishlar: ${remaining} ta.`
+          : "Juda ko'p xato urinishlar qilindi. Xavfsizlik yuzasidan ushbu hisob 15 daqiqaga bloklandi.";
+
+      return NextResponse.json(
+        {
+          success: false,
+          remainingAttempts: remaining,
+          message,
         },
         { status: 401 }
       );
     }
 
-    return NextResponse.json({
+    // 3. Reset failed login attempts on success
+    resetLoginRateLimit(clientIp, cleanEmail);
+
+    // 4. Create cryptographically signed enterprise session token (JWT)
+    const sessionToken = signSessionToken({
+      userId: authResult.user.id,
+      email: authResult.user.email,
+      fullName: authResult.user.full_name,
+    });
+
+    const response = NextResponse.json({
       success: true,
       user: authResult.user,
       message: "Xush kelibsiz!",
     });
+
+    // 5. Set HttpOnly; Secure; SameSite=Lax session cookie
+    response.cookies.set(
+      SESSION_COOKIE_OPTIONS.name,
+      sessionToken,
+      SESSION_COOKIE_OPTIONS
+    );
+
+    return response;
   } catch (error: any) {
     console.error("login API error:", error);
     return NextResponse.json(
@@ -59,4 +108,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
